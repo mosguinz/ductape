@@ -1,10 +1,51 @@
 import zipfile
+import os
+import re
+import glob
 
 import mosspy
 
-submission_zip = "submissions.zip"
+canvas_zip = "submissions.zip"
 zip_output = "./zip_output"
 
-with zipfile.ZipFile(submission_zip, "r") as f:
-    f.extractall(zip_output)
+user_id = os.getenv("user_id")
+moss = mosspy.Moss(user_id=user_id, language="java")
+
+with zipfile.ZipFile(canvas_zip, "r") as zf:
+    for submission in zf.filelist:
+        folder_name = re.match(r"(\w+_\w*_\d+\d+)", submission.filename)
+        folder_name = folder_name[0] if folder_name else None
+        print("Extracting", folder_name)
+
+        b = zf.open(submission, "r")
+        with zipfile.ZipFile(b) as student_zip:
+            student_zip.extractall(path=os.path.join(zip_output, folder_name))
+
+all_files = glob.glob(f"{zip_output}/**/*java", recursive=True)
+
+submission_dirs = []
+for f in all_files:
+    if os.path.isfile(f) and not f.endswith("pdf") and os.path.getsize(f) > 0:
+        print("adding", f, "to MOSS")
+        submission_dirs.append(f)
+        moss.addFile(f)
+
+moss.setDirectoryMode(1)
+
+
+# progress function optional, run on every file uploaded
+# result is submission URL
+url = moss.send(lambda file_path, display_name: print('*', end='', flush=True))
+
+print()
+
+print ("Report Url: " + url)
+
+# Save report file
+moss.saveWebPage(url, "./report.html")
+
+# Download whole report locally including code diff links
+mosspy.download_report(url, "./report", connections=8, log_level=10, on_read=lambda url: print('*', end='', flush=True))
+# log_level=logging.DEBUG (20 to disable)
+# on_read function run for every downloaded file
 
