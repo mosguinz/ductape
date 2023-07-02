@@ -7,7 +7,7 @@ from pprint import pprint
 
 import mosspy
 
-logging.basicConfig(logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 canvas_zip = "submissions.zip"
 zip_output = "./zip_output"
@@ -29,7 +29,7 @@ def unzip_canvas_submission(original_name=False) -> None:
             else:
                 folder_name = re.match(r"(\w+_\w*_\d+\d+)", submission.filename)
                 folder_name = folder_name[0] if folder_name else None
-            logging.debug("Extracting", folder_name)
+            logging.debug(f"Extracting {folder_name}")
 
             b = zf.open(submission, "r")
             with zipfile.ZipFile(b) as student_zip:
@@ -42,7 +42,7 @@ def stage_moss_files():
     submission_dirs = []
     for f in all_files:
         if os.path.isfile(f) and not f.endswith("pdf") and os.path.getsize(f) > 0:
-            logging.debug("Adding", f, "to MOSS")
+            logging.debug(f"Adding {f} to MOSS")
             submission_dirs.append(f)
             moss.addFile(f)
 
