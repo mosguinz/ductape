@@ -11,15 +11,26 @@ zip_output = "./zip_output"
 user_id = os.getenv("user_id")
 moss = mosspy.Moss(user_id=user_id, language="java")
 
-with zipfile.ZipFile(canvas_zip, "r") as zf:
-    for submission in zf.filelist:
-        folder_name = re.match(r"(\w+_\w*_\d+\d+)", submission.filename)
-        folder_name = folder_name[0] if folder_name else None
-        print("Extracting", folder_name)
 
-        b = zf.open(submission, "r")
-        with zipfile.ZipFile(b) as student_zip:
-            student_zip.extractall(path=os.path.join(zip_output, folder_name))
+def unzip_canvas_submission(original_name=False) -> None:
+    """
+    Unzip the Canvas submission folder and place them in a folder.
+    Set `original_name` to `True` to keep student's ZIP file original name.
+    This doesn't work consistently, notably with resubmissions.
+    """
+    with zipfile.ZipFile(canvas_zip, "r") as zf:
+        for submission in zf.filelist:
+            if original_name:
+                folder_name = None
+            else:
+                folder_name = re.match(r"(\w+_\w*_\d+\d+)", submission.filename)
+                folder_name = folder_name[0] if folder_name else None
+            print("Extracting", folder_name)
+
+            b = zf.open(submission, "r")
+            with zipfile.ZipFile(b) as student_zip:
+                student_zip.extractall(path=os.path.join(zip_output, folder_name))
+
 
 all_files = glob.glob(f"{zip_output}/**/*java", recursive=True)
 
