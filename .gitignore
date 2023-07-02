@@ -1,3 +1,6 @@
 *.zip
 *.pdf
 .env
+**/._DS_Store
+zip_output/
+report/
