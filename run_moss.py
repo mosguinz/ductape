@@ -9,6 +9,11 @@ import mosspy
 
 logging.basicConfig(level=logging.DEBUG)
 
+LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
+    "java": ["java"],
+    "cpp": [".cpp", ".h", ".hpp"],
+}
+
 canvas_zip = "submissions.zip"
 zip_output = "./zip_output"
 
@@ -36,14 +41,20 @@ def unzip_canvas_submission(original_name=False) -> None:
                 student_zip.extractall(path=os.path.join(zip_output, folder_name))
 
 
-def stage_moss_files():
-    all_files = glob.glob(f"{zip_output}/**/*java", recursive=True)
+def stage_moss_files(language: str = ""):
+    files = []
+    extensions = LANGUAGE_EXTENSIONS.get(language.lower(), [""])
 
-    submission_dirs = []
-    for f in all_files:
-        if os.path.isfile(f) and not f.endswith("pdf") and os.path.getsize(f) > 0:
+    for ext in extensions:
+        files += glob.glob(f"{zip_output}/**/*{ext}", recursive=True)
+    for f in files:
+        if (
+            os.path.isfile(f)
+            and not f.endswith("pdf")
+            and not f.endswith("jar")
+            and os.path.getsize(f) > 0
+        ):
             logging.debug(f"Adding {f} to MOSS")
-            submission_dirs.append(f)
             moss.addFile(f)
 
     moss.setDirectoryMode(1)
@@ -75,5 +86,6 @@ def send_to_moss():
 
 if __name__ == "__main__":
     unzip_canvas_submission()
+    stage_moss_files("")
 
     pprint(moss.__dict__)
