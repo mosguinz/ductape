@@ -46,17 +46,22 @@ moss.setDirectoryMode(1)
 
 # progress function optional, run on every file uploaded
 # result is submission URL
-url = moss.send(lambda file_path, display_name: print('*', end='', flush=True))
+url = moss.send(lambda file_path, display_name: print("*", end="", flush=True))
 
 print()
 
-print ("Report Url: " + url)
+print("Report Url: " + url)
 
 # Save report file
 moss.saveWebPage(url, "./report.html")
 
 # Download whole report locally including code diff links
-mosspy.download_report(url, "./report", connections=8, log_level=10, on_read=lambda url: print('*', end='', flush=True))
+mosspy.download_report(
+    url,
+    "./report",
+    connections=8,
+    log_level=10,
+    on_read=lambda url: print("*", end="", flush=True),
+)
 # log_level=logging.DEBUG (20 to disable)
 # on_read function run for every downloaded file
-
