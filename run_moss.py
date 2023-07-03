@@ -3,6 +3,8 @@ import os
 import re
 import glob
 import logging
+import argparse
+import pathlib
 from pprint import pprint
 
 import mosspy
@@ -14,14 +16,14 @@ LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
     "cpp": [".cpp", ".h", ".hpp"],
 }
 
-canvas_zip = "submissions.zip"
-zip_output = "./zip_output"
+DEFAULT_CANVAS_ZIP = "submissions.zip"
+DEFAULT_ZIP_OUTPUT = "./zip_output"
 
 user_id = os.getenv("user_id")
 moss = mosspy.Moss(user_id=user_id, language="java")
 
 
-def unzip_canvas_submission(original_name=False) -> None:
+def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None:
     """
     Unzip the Canvas submission folder and place them in a folder.
     Set `original_name` to `True` to keep student's ZIP file original name.
@@ -41,7 +43,7 @@ def unzip_canvas_submission(original_name=False) -> None:
                 student_zip.extractall(path=os.path.join(zip_output, folder_name))
 
 
-def stage_moss_files(language: str = ""):
+def stage_moss_files(zip_output, language: str = ""):
     files = []
     extensions = LANGUAGE_EXTENSIONS.get(language.lower(), [""])
 
@@ -83,9 +85,55 @@ def send_to_moss():
     # log_level=logging.DEBUG (20 to disable)
     # on_read function run for every downloaded file
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+            description="Utility for unzipping Canvas submission and uploading files to MOSS."
+        )
+    parser.add_argument("zip_file", help="The submission ZIP file from Canvas.")
+    parser.add_argument(
+        "-l",
+        "--lang",
+        metavar="language",
+        help="Programming language for the assignment",
+        required=True,
+    )
+    parser.add_argument(
+        "-b",
+        "--batches",
+        metavar="n",
+        help="Upload randomly-chosen submissions to MOSS in [n] batches.",
+        type=int,
+        default=0,
+    )
+    parser.add_argument(
+        "--save-report",
+        help="Save MOSS report to local machine.",
+        action="store_true",
+        default=True,
+    )
+
+    parser.add_argument(
+        "-o",
+        "--zip-output",
+        metavar="path",
+        help="Path to extract the submission ZIP file into.",
+        default="./zip_output",
+    )
+    parser.add_argument(
+        "-ro",
+        "--report-output",
+        metavar="path",
+        help="Path to save the MOSS report.",
+        default="./report",
+    )
+
+    return parser.parse_args()
+
 
 if __name__ == "__main__":
-    unzip_canvas_submission()
-    stage_moss_files("")
+    pass
 
-    pprint(moss.__dict__)
+    # unzip_canvas_submission()
+    # stage_moss_files("")
+
+    # pprint(moss.__dict__)
