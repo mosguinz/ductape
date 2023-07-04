@@ -5,6 +5,7 @@ import glob
 import logging
 import argparse
 import pathlib
+import random
 from pprint import pprint
 
 import mosspy
@@ -43,12 +44,22 @@ def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None
                 student_zip.extractall(path=os.path.join(zip_output, folder_name))
 
 
-def stage_moss_files(zip_output, language: str = ""):
+def stage_moss_files(zip_output, language: str = "", max_submissions=0):
     files = []
+    submission_folders = []
     extensions = LANGUAGE_EXTENSIONS.get(language.lower(), [""])
 
+    if max_submissions:
+        folders = glob.glob(f"{zip_output}/*", recursive=True)
+        random.shuffle(folders)
+        submission_folders = folders[:max_submissions]
+    else:
+        submission_folders = [zip_output]
+
     for ext in extensions:
-        files += glob.glob(f"{zip_output}/**/*{ext}", recursive=True)
+        for folder in submission_folders:
+            files += glob.glob(f"{folder}/**/*{ext}", recursive=True)
+
     for f in files:
         if (
             os.path.isfile(f)
@@ -59,6 +70,7 @@ def stage_moss_files(zip_output, language: str = ""):
             logging.debug(f"Adding {f} to MOSS")
             moss.addFile(f)
 
+    pprint(files)
     moss.setDirectoryMode(1)
 
 
@@ -85,10 +97,11 @@ def send_to_moss():
     # log_level=logging.DEBUG (20 to disable)
     # on_read function run for every downloaded file
 
+
 def parse_args():
     parser = argparse.ArgumentParser(
-            description="Utility for unzipping Canvas submission and uploading files to MOSS."
-        )
+        description="Utility for unzipping Canvas submission and uploading files to MOSS."
+    )
     parser.add_argument("zip_file", help="The submission ZIP file from Canvas.")
     parser.add_argument(
         "-l",
@@ -131,6 +144,7 @@ def parse_args():
 
 
 if __name__ == "__main__":
+    stage_moss_files(DEFAULT_ZIP_OUTPUT, "java")
     pass
 
     # unzip_canvas_submission()
