@@ -31,13 +31,15 @@ def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None
     This doesn't work consistently, notably with resubmissions.
     """
     with zipfile.ZipFile(canvas_zip, "r") as zf:
-        for submission in zf.filelist:
-            if original_name:
-                folder_name = None
-            else:
-                folder_name = re.match(r"(\w+_\w*_\d+\d+)", submission.filename)
-                folder_name = folder_name[0] if folder_name else None
-            logging.debug(f"Extracting {folder_name}")
+        for submission in zf.infolist():
+            # [last][first]_[int]_[int]_[original_filename]
+            res = re.match(r"(\w+_\w*_\d+\d+)_(.+)\.", submission.filename)
+            try:
+                folder_name = res[2] if original_name else res[1]
+            except TypeError:
+                folder_name = submission.filename
+
+            # logging.debug(f"Extracting {folder_name}")
 
             b = zf.open(submission, "r")
             with zipfile.ZipFile(b) as student_zip:
