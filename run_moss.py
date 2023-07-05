@@ -102,29 +102,42 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Utility for unzipping Canvas submission and uploading files to MOSS."
     )
+
     parser.add_argument("zip_file", help="The submission ZIP file from Canvas.")
-    parser.add_argument(
-        "-l",
-        "--lang",
-        metavar="language",
-        help="Programming language for the assignment",
-        required=True,
-    )
-    parser.add_argument(
-        "-b",
-        "--batches",
-        metavar="n",
-        help="Upload randomly-chosen submissions to MOSS in [n] batches.",
-        type=int,
-        default=0,
-    )
+    parser.add_argument("language", help="Programming language for the assignment.")
+
     parser.add_argument(
         "--save-report",
         help="Save MOSS report to local machine.",
         action="store_true",
         default=True,
     )
+    parser.add_argument(
+        "--original-name",
+        help="""
+        Keep the submission's original name when unzipping.
+        Note that this doesn't work consistently, notably with resubmissions.
+        """,
+        action="store_true",
+        default=False,
+    )
 
+    parser.add_argument(
+        "-n",
+        "--max-submissions",
+        metavar="n",
+        help="Maximum number of submissions per batch.",
+        type=int,
+        default=0,
+    )
+    parser.add_argument(
+        "-r",
+        "--repeat",
+        metavar="n",
+        help="Number of times to perform repeated submissions.",
+        type=int,
+        default=0,
+    )
     parser.add_argument(
         "-o",
         "--zip-output",
