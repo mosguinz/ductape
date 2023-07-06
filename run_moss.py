@@ -11,6 +11,7 @@ from pprint import pprint
 import mosspy
 
 logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger()
 
 LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
     "java": ["java"],
@@ -19,9 +20,6 @@ LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
 
 DEFAULT_CANVAS_ZIP = "submissions.zip"
 DEFAULT_ZIP_OUTPUT = "./zip_output"
-
-user_id = os.getenv("user_id")
-moss = mosspy.Moss(user_id=user_id, language="java")
 
 
 def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None:
@@ -39,14 +37,16 @@ def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None
             except TypeError:
                 folder_name = submission.filename
 
-            # logging.debug(f"Extracting {folder_name}")
+            # log.debug(f"Extracting {folder_name}")
 
             b = zf.open(submission, "r")
             with zipfile.ZipFile(b) as student_zip:
                 student_zip.extractall(path=os.path.join(zip_output, folder_name))
 
 
-def stage_moss_files(zip_output, language: str = "", max_submissions=0):
+def stage_moss_files(zip_output, language: str = "", max_submissions=0) -> mosspy.Moss:
+    moss = mosspy.Moss(user_id=None, language=language)
+
     files = []
     submission_folders = []
     extensions = LANGUAGE_EXTENSIONS.get(language.lower(), [""])
@@ -69,35 +69,28 @@ def stage_moss_files(zip_output, language: str = "", max_submissions=0):
             and not f.endswith("jar")
             and os.path.getsize(f) > 0
         ):
-            logging.debug(f"Adding {f} to MOSS")
+            log.debug(f"Adding {f} to MOSS")
             moss.addFile(f)
 
     pprint(files)
     moss.setDirectoryMode(1)
+    return moss
 
 
-def send_to_moss():
-    # progress function optional, run on every file uploaded
-    # result is submission URL
-    url = moss.send(lambda file_path, display_name: print("*", end="", flush=True))
+def send_to_moss(moss: mosspy.Moss, user_id=None, no_report=False):
+    moss.user_id = user_id or os.getenv("user_id")
 
-    print()
+    url = moss.send(lambda file_path, _: log.debug(f"Uploading: {file_path}"))
+    log.info("Report URL: " + url)
 
-    print("Report Url: " + url)
-
-    # Save report file
+    log.info("Saving report page")
     moss.saveWebPage(url, "./report.html")
 
-    # Download whole report locally including code diff links
-    mosspy.download_report(
-        url,
-        "./report",
-        connections=8,
-        log_level=10,
-        on_read=lambda url: print("*", end="", flush=True),
-    )
-    # log_level=logging.DEBUG (20 to disable)
-    # on_read function run for every downloaded file
+    if no_report:
+        return
+
+    log.info("Downloading report")
+    mosspy.download_report(url, "./report", connections=8, log_level=log.level)
 
 
 def parse_args():
@@ -109,10 +102,9 @@ def parse_args():
     parser.add_argument("language", help="Programming language for the assignment.")
 
     parser.add_argument(
-        "--save-report",
-        help="Save MOSS report to local machine.",
+        "--no-report",
+        help="Do not save MOSS report to local machine.",
         action="store_true",
-        default=True,
     )
     parser.add_argument(
         "--original-name",
@@ -159,10 +151,17 @@ def parse_args():
 
 
 if __name__ == "__main__":
-    stage_moss_files(DEFAULT_ZIP_OUTPUT, "java")
-    pass
+    opt = parse_args()
+    pprint(opt.__dict__)
 
-    # unzip_canvas_submission()
-    # stage_moss_files("")
-
-    # pprint(moss.__dict__)
+    unzip_canvas_submission(
+        canvas_zip=opt.zip_file,
+        zip_output=opt.zip_output,
+        original_name=opt.original_name,
+    )
+    moss = stage_moss_files(
+        zip_output=opt.zip_output,
+        language=opt.language,
+        max_submissions=opt.max_submissions,
+    )
+    send_to_moss(moss, no_report=opt.no_report)
