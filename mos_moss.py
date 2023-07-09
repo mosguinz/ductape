@@ -24,6 +24,13 @@ DEFAULT_CANVAS_ZIP = "submissions.zip"
 DEFAULT_ZIP_OUTPUT = "./zip_output"
 
 
+def cleanup_files(path):
+    """Currently just removes __MACOSX folders."""
+    macos_folders = glob.glob(f"{path}/**/__MACOSX", recursive=True)
+    for f in macos_folders:
+        shutil.rmtree(f)
+
+
 def flatten_folder(destination):
     """Flatten folders containing a single folder."""
     content = os.listdir(destination)
@@ -57,6 +64,7 @@ def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None
             with zipfile.ZipFile(b) as student_zip:
                 path = os.path.join(zip_output, folder_name)
                 student_zip.extractall(path=path)
+                cleanup_files(path)
                 flatten_folder(path)
 
 
