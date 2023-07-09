@@ -5,6 +5,8 @@ import glob
 import logging
 import argparse
 import pathlib
+import itertools
+import shutil
 import random
 from pprint import pprint
 
@@ -20,6 +22,18 @@ LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
 
 DEFAULT_CANVAS_ZIP = "submissions.zip"
 DEFAULT_ZIP_OUTPUT = "./zip_output"
+
+
+def flatten_folder(destination):
+    """Flatten folders containing a single folder."""
+    content = os.listdir(destination)
+    if len(content) == 1:
+        folder = os.path.join(destination, content[0])
+
+        log.debug(f"Flattening {folder}")
+        for f in os.listdir(folder):
+            shutil.move(os.path.join(folder, f), destination)
+        os.rmdir(folder)
 
 
 def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None:
@@ -41,7 +55,9 @@ def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None
 
             b = zf.open(submission, "r")
             with zipfile.ZipFile(b) as student_zip:
-                student_zip.extractall(path=os.path.join(zip_output, folder_name))
+                path = os.path.join(zip_output, folder_name)
+                student_zip.extractall(path=path)
+                flatten_folder(path)
 
 
 def stage_moss_files(zip_output, language: str = "", max_submissions=0) -> mosspy.Moss:
@@ -164,4 +180,4 @@ if __name__ == "__main__":
         language=opt.language,
         max_submissions=opt.max_submissions,
     )
-    send_to_moss(moss, no_report=opt.no_report)
+    # send_to_moss(moss, no_report=opt.no_report)
