@@ -70,8 +70,31 @@ def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None
                 flatten_folder(path)
 
 
+def list_files(folder: str, language="") -> list[str]:
+    """
+    List files from the provided folder. If `language` is provided, the
+    resulting list will only contain files that match the extension of the
+    language.
+    """
+    files = []
+    for ext in LANGUAGE_EXTENSIONS.get(language.lower(), ""):
+        files += glob.glob(f"{folder}/**/*{ext}", recursive=True)
+        pprint(f"{folder}/**/*{ext}")
+
+    new_files = []
+    for f in files:
+        if (
+            os.path.isfile(f)
+            and not f.endswith("pdf")
+            and not f.endswith("jar")
+            and os.path.getsize(f) > 0,
+        ):
+            new_files.append(f)
+    return new_files
+
+
 def stage_moss_files(
-    zip_output,
+    zip_output: str,
     language: str = "",
     max_submissions=0,
     base_files=None,
@@ -81,7 +104,6 @@ def stage_moss_files(
 
     files = []
     submission_folders = []
-    extensions = LANGUAGE_EXTENSIONS.get(language.lower(), [""])
 
     if max_submissions:
         folders = glob.glob(f"{zip_output}/*", recursive=True)
@@ -90,32 +112,25 @@ def stage_moss_files(
     else:
         submission_folders = [zip_output]
 
-    for ext in extensions:
-        for folder in submission_folders:
-            files += glob.glob(f"{folder}/**/*{ext}", recursive=True)
+    for folder in submission_folders:
+        files += list_files(folder, language)
 
     for f in files:
-        if (
-            os.path.isfile(f)
-            and not f.endswith("pdf")
-            and not f.endswith("jar")
-            and os.path.getsize(f) > 0
-        ):
-            log.debug(f"Adding {f} to MOSS")
-            moss.addFile(f)
+        moss.addFile(f)
 
     if base_files:
-        files = glob.glob(f"{base_files}/**/*", recursive=True)
+        files = list_files(base_files, language)
         if not files:
+            pass
             raise FileNotFoundError(f"{base_files} returned no matches for base files")
         for f in files:
             moss.addBaseFile(f)
 
     if solutions:
-        files = glob.glob(f"{solutions}/**/*", recursive=True)
+        files = list_files(solutions, language)
         if not files:
             raise FileNotFoundError(
-                f"{base_files} returned no matches for online solutions"
+                f"{solutions} returned no matches for online solutions"
             )
         for f in files:
             moss.addFile(f)
@@ -234,4 +249,4 @@ if __name__ == "__main__":
         base_files=opt.base_files,
         solutions=opt.solutions,
     )
-    # send_to_moss(moss, no_report=opt.no_report)
+    send_to_moss(moss, no_report=opt.no_report)
