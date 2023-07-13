@@ -23,6 +23,8 @@ LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
 DEFAULT_CANVAS_ZIP = "submissions.zip"
 DEFAULT_ZIP_OUTPUT = "./zip_output"
 
+## TODO: online solutions and basefile
+
 
 def cleanup_files(path):
     """Currently just removes __MACOSX folders."""
@@ -68,7 +70,13 @@ def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None
                 flatten_folder(path)
 
 
-def stage_moss_files(zip_output, language: str = "", max_submissions=0) -> mosspy.Moss:
+def stage_moss_files(
+    zip_output,
+    language: str = "",
+    max_submissions=0,
+    base_files=None,
+    solutions=None,
+) -> mosspy.Moss:
     moss = mosspy.Moss(user_id=None, language=language)
 
     files = []
@@ -96,8 +104,25 @@ def stage_moss_files(zip_output, language: str = "", max_submissions=0) -> mossp
             log.debug(f"Adding {f} to MOSS")
             moss.addFile(f)
 
-    pprint(files)
+    if base_files:
+        files = glob.glob(f"{base_files}/**/*", recursive=True)
+        if not files:
+            raise FileNotFoundError(f"{base_files} returned no matches for base files")
+        for f in files:
+            moss.addBaseFile(f)
+
+    if solutions:
+        files = glob.glob(f"{solutions}/**/*", recursive=True)
+        if not files:
+            raise FileNotFoundError(
+                f"{base_files} returned no matches for online solutions"
+            )
+        for f in files:
+            moss.addFile(f)
+
     moss.setDirectoryMode(1)
+    pprint(moss.__dict__)
+
     return moss
 
 
@@ -170,6 +195,25 @@ def parse_args():
         help="Path to save the MOSS report.",
         default="./report",
     )
+    parser.add_argument(
+        "-b",
+        "--base-files",
+        metavar="path",
+        help="""
+        Path to base files provided by the instructor, such as starter code.
+        Helps MOSS filter boilerplates that are common throughout submissions.
+        """,
+    )
+    parser.add_argument(
+        "-s",
+        "--solutions",
+        metavar="path",
+        help="""
+        Path to online solutions to check against.
+        This will be sent to MOSS alongside student's submissions.
+        Bypasses maximum number of submissions, if supplied.
+        """,
+    )
 
     return parser.parse_args()
 
@@ -187,5 +231,7 @@ if __name__ == "__main__":
         zip_output=opt.zip_output,
         language=opt.language,
         max_submissions=opt.max_submissions,
+        base_files=opt.base_files,
+        solutions=opt.solutions,
     )
     # send_to_moss(moss, no_report=opt.no_report)
