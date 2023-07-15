@@ -3,17 +3,13 @@ import os
 import re
 import glob
 import logging
+import logging.handlers
 import argparse
-import pathlib
-import itertools
 import shutil
-import random
-from pprint import pprint
+import pprint
 
 import mosspy
 
-logging.basicConfig(level=logging.DEBUG)
-log = logging.getLogger()
 
 LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
     "java": ["java"],
@@ -22,6 +18,21 @@ LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
 
 DEFAULT_CANVAS_ZIP = "submissions.zip"
 DEFAULT_ZIP_OUTPUT = "zip_output"
+DEFAULT_LOG_NAME = "mos_moss.log"
+
+file_handler = logging.handlers.RotatingFileHandler(
+    DEFAULT_LOG_NAME, mode="w", backupCount=10
+)
+
+if os.path.exists(DEFAULT_LOG_NAME):
+    file_handler.doRollover()
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(threadName)s] [%(levelname)s] %(message)s",
+    handlers=[file_handler, logging.StreamHandler()],
+)
+log = logging.getLogger()
 
 
 def cleanup_files(path):
@@ -77,7 +88,6 @@ def list_files(folder: str, language="") -> list[str]:
     files = []
     for ext in LANGUAGE_EXTENSIONS.get(language.lower(), ""):
         files += glob.glob(f"{folder}/**/*{ext}", recursive=True)
-        pprint(f"{folder}/**/*{ext}")
 
     new_files = []
     for f in files:
@@ -154,15 +164,15 @@ def stage_moss_files(
             solutions=solutions,
         )
     )
-    moss.setDirectoryMode(1)
-    pprint(moss.__dict__)
 
+    moss.setDirectoryMode(1)
     return moss
 
 
 def send_to_moss(moss: mosspy.Moss, user_id=None, no_report=False):
     moss.user_id = user_id or os.getenv("user_id")
 
+    log.debug(f"Sending to MOSS with: {pprint.pformat(moss.__dict__)}")
     url = moss.send(lambda file_path, _: log.debug(f"Uploading: {file_path}"))
     log.info("Report URL: " + url)
 
@@ -196,7 +206,11 @@ def parse_args():
         Note that this doesn't work consistently, notably with resubmissions.
         """,
         action="store_true",
-        default=False,
+    )
+    parser.add_argument(
+        "--verbose",
+        help="Log everything.",
+        action="store_true",
     )
 
     parser.add_argument(
@@ -254,7 +268,9 @@ def parse_args():
 
 if __name__ == "__main__":
     opt = parse_args()
-    pprint(opt.__dict__)
+
+    log.setLevel(logging.DEBUG if opt.verbose else logging.INFO)
+    log.debug(f"CLI options: {pprint.pformat(opt.__dict__)}")
 
     unzip_canvas_submission(
         canvas_zip=opt.zip_file,

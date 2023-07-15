@@ -1,5 +1,7 @@
 *.zip
 *.pdf
+*.log
+*.log.*
 .env
 **/._DS_Store
 zip_output/
