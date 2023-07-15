@@ -21,9 +21,7 @@ LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
 }
 
 DEFAULT_CANVAS_ZIP = "submissions.zip"
-DEFAULT_ZIP_OUTPUT = "./zip_output"
-
-## TODO: online solutions and basefile
+DEFAULT_ZIP_OUTPUT = "zip_output"
 
 
 def cleanup_files(path):
@@ -93,6 +91,20 @@ def list_files(folder: str, language="") -> list[str]:
     return new_files
 
 
+def create_moss_comments(**kwargs) -> str:
+    msg = []
+    if v := kwargs.get("base_files"):
+        msg.append(f"<b>Base files:</b> {v}")
+    if v := kwargs.get("solutions"):
+        msg.append(f"<b>Solutions:</b> {v}")
+
+    if v := kwargs.get("max_submissions"):
+        msg.append(f"<b>Max submissions:</b> {v}")
+        if v := kwargs.get("submission_folders"):
+            msg.append(f"<b>Submissions in this batch:</b><br>{'<br>'.join(v)}")
+    return "<br><br>".join(msg)
+
+
 def stage_moss_files(
     zip_output: str,
     language: str = "",
@@ -121,7 +133,6 @@ def stage_moss_files(
     if base_files:
         files = list_files(base_files, language)
         if not files:
-            pass
             raise FileNotFoundError(f"{base_files} returned no matches for base files")
         for f in files:
             moss.addBaseFile(f)
@@ -135,6 +146,14 @@ def stage_moss_files(
         for f in files:
             moss.addFile(f)
 
+    moss.setCommentString(
+        create_moss_comments(
+            max_submissions=max_submissions,
+            submission_folders=submission_folders,
+            base_files=base_files,
+            solutions=solutions,
+        )
+    )
     moss.setDirectoryMode(1)
     pprint(moss.__dict__)
 
