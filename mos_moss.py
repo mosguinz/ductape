@@ -8,6 +8,8 @@ import argparse
 import shutil
 import pprint
 
+from datetime import datetime
+
 import mosspy
 
 
@@ -18,14 +20,10 @@ LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
 
 DEFAULT_CANVAS_ZIP = "submissions.zip"
 DEFAULT_ZIP_OUTPUT = "zip_output"
-DEFAULT_LOG_NAME = "mos_moss.log"
 
-file_handler = logging.handlers.RotatingFileHandler(
-    DEFAULT_LOG_NAME, mode="w", backupCount=10
+file_handler = logging.FileHandler(
+    filename=f"mos_moss_{datetime.now().isoformat()}.log", mode="w"
 )
-
-if os.path.exists(DEFAULT_LOG_NAME):
-    file_handler.doRollover()
 
 logging.basicConfig(
     level=logging.DEBUG,
