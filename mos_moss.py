@@ -14,7 +14,7 @@ from pathlib import Path
 
 import mosspy
 
-
+# Set your MOSS ID here or in your environment variable.
 MOSS_ID = "1234"
 
 LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
@@ -171,7 +171,7 @@ def stage_moss_files(
 def send_to_moss(
     moss: mosspy.Moss, report_path: str, user_id=None, no_report=False, count=1
 ):
-    moss.user_id = user_id or os.getenv("user_id") or MOSS_ID
+    moss.user_id = user_id or os.getenv("MOSS_ID") or MOSS_ID
 
     if not moss.user_id:
         raise ValueError("No MOSS ID found")
