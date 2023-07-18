@@ -6,6 +6,7 @@
 * `pip install mosspy`
 * Set `MOSS_ID` at the top of `mos_moss.py` file.
   * Or set your environment variable `MOSS_ID`.
+  * Or supply the ID using `-i` at runtime.
 
 ## Usage
 

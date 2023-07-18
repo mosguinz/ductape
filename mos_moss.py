@@ -270,6 +270,18 @@ def parse_args():
         Bypasses maximum number of submissions, if supplied.
         """,
     )
+    parser.add_argument(
+        "-i",
+        "--moss-id",
+        metavar="id",
+        help="""
+        MOSS ID to use when submitting request to MOSS.
+        If supplied, this value will be used over the value set for
+        the `MOSS_ID` variable at the top of the file or in the environment
+        variables.
+        """,
+        type=int,
+    )
 
     return parser.parse_args()
 
@@ -296,5 +308,9 @@ if __name__ == "__main__":
             solutions=opt.solutions,
         )
         send_to_moss(
-            moss, no_report=opt.no_report, report_path=opt.report_output, count=n
+            moss=moss,
+            report_path=opt.report_output,
+            user_id=opt.moss_id,
+            no_report=opt.no_report,
+            count=n,
         )
