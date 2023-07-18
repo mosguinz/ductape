@@ -15,6 +15,8 @@ from pathlib import Path
 import mosspy
 
 
+MOSS_ID = "1234"
+
 LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
     "java": ["java"],
     "cpp": [".cpp", ".h", ".hpp"],
@@ -169,7 +171,10 @@ def stage_moss_files(
 def send_to_moss(
     moss: mosspy.Moss, report_path: str, user_id=None, no_report=False, count=1
 ):
-    moss.user_id = user_id or os.getenv("user_id")
+    moss.user_id = user_id or os.getenv("user_id") or MOSS_ID
+
+    if not moss.user_id:
+        raise ValueError("No MOSS ID found")
 
     log.debug(f"Sending to MOSS with: {pprint.pformat(moss.__dict__)}")
     url = moss.send(lambda file_path, _: log.debug(f"Uploading: {file_path}"))
