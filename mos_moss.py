@@ -10,6 +10,7 @@ import pprint
 import random
 
 from datetime import datetime
+from pathlib import Path
 
 import mosspy
 
@@ -18,9 +19,6 @@ LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
     "java": ["java"],
     "cpp": [".cpp", ".h", ".hpp"],
 }
-
-DEFAULT_CANVAS_ZIP = "submissions.zip"
-DEFAULT_ZIP_OUTPUT = "zip_output"
 
 file_handler = logging.FileHandler(
     filename=f"mos_moss_{datetime.now().isoformat()}.log", mode="w"
@@ -168,7 +166,9 @@ def stage_moss_files(
     return moss
 
 
-def send_to_moss(moss: mosspy.Moss, user_id=None, no_report=False):
+def send_to_moss(
+    moss: mosspy.Moss, report_path: str, user_id=None, no_report=False, count=1
+):
     moss.user_id = user_id or os.getenv("user_id")
 
     log.debug(f"Sending to MOSS with: {pprint.pformat(moss.__dict__)}")
@@ -176,13 +176,17 @@ def send_to_moss(moss: mosspy.Moss, user_id=None, no_report=False):
     log.info("Report URL: " + url)
 
     log.info("Saving report page")
-    moss.saveWebPage(url, "./report.html")
+    Path(report_path).mkdir(parents=True, exist_ok=True)
+    moss.saveWebPage(url, f"{report_path}/report{count}.html")
 
     if no_report:
         return
 
     log.info("Downloading report")
-    mosspy.download_report(url, "./report", connections=8, log_level=log.level)
+    Path(f"{report_path}/report{count}").mkdir(parents=True, exist_ok=True)
+    mosspy.download_report(
+        url, f"{report_path}/report{count}", connections=8, log_level=log.level
+    )
 
 
 def parse_args():
@@ -226,7 +230,7 @@ def parse_args():
         metavar="n",
         help="Number of times to perform repeated submissions.",
         type=int,
-        default=0,
+        default=1,
     )
     parser.add_argument(
         "-o",
@@ -239,7 +243,7 @@ def parse_args():
         "-ro",
         "--report-output",
         metavar="path",
-        help="Path to save the MOSS report.",
+        help="Path to save MOSS report(s).",
         default="./report",
     )
     parser.add_argument(
@@ -276,11 +280,16 @@ if __name__ == "__main__":
         zip_output=opt.zip_output,
         original_name=opt.original_name,
     )
-    moss = stage_moss_files(
-        zip_output=opt.zip_output,
-        language=opt.language,
-        max_submissions=opt.max_submissions,
-        base_files=opt.base_files,
-        solutions=opt.solutions,
-    )
-    send_to_moss(moss, no_report=opt.no_report)
+
+    for n in range(1, opt.repeat + 1):
+        log.info(f"Sending batch {n}/{opt.repeat} to MOSS")
+        moss = stage_moss_files(
+            zip_output=opt.zip_output,
+            language=opt.language,
+            max_submissions=opt.max_submissions,
+            base_files=opt.base_files,
+            solutions=opt.solutions,
+        )
+        send_to_moss(
+            moss, no_report=opt.no_report, report_path=opt.report_output, count=n
+        )
