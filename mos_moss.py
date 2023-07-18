@@ -7,6 +7,7 @@ import logging.handlers
 import argparse
 import shutil
 import pprint
+import sys
 import random
 
 from datetime import datetime
@@ -22,15 +23,6 @@ LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
     "cpp": [".cpp", ".h", ".hpp"],
 }
 
-file_handler = logging.FileHandler(
-    filename=f"mos_moss_{datetime.now().isoformat()}.log", mode="w"
-)
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s [%(threadName)s] [%(levelname)s] %(message)s",
-    handlers=[file_handler, logging.StreamHandler()],
-)
 log = logging.getLogger()
 
 
@@ -286,9 +278,21 @@ def parse_args():
     return parser.parse_args()
 
 
+def setup_logger():
+    file_handler = logging.FileHandler(
+        filename=f"mos_moss_{datetime.now().isoformat()}.log", mode="w"
+    )
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s [%(threadName)s] [%(levelname)s] %(message)s",
+        handlers=[file_handler, logging.StreamHandler(sys.stdout)],
+    )
+
+
 if __name__ == "__main__":
     opt = parse_args()
 
+    setup_logger()
     log.setLevel(logging.DEBUG if opt.verbose else logging.INFO)
     log.debug(f"CLI options: {pprint.pformat(opt.__dict__)}")
 
