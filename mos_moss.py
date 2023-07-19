@@ -131,6 +131,11 @@ def stage_moss_files(
     for f in files:
         moss.addFile(f)
 
+    if not files:
+        raise FileNotFoundError(
+            "No files to upload. Checked the provided ZIP file and language"
+        )
+
     if base_files:
         files = list_files(base_files, language)
         if not files:
