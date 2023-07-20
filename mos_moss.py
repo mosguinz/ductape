@@ -86,7 +86,7 @@ def list_files(folder: str, language="") -> list[str]:
             os.path.isfile(f)
             and not f.endswith("pdf")
             and not f.endswith("jar")
-            and os.path.getsize(f) > 0,
+            and os.path.getsize(f) > 0
         ):
             new_files.append(f)
     return new_files
