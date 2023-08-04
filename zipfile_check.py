@@ -60,21 +60,23 @@ def check_report(temp_dir: str) -> bool:
     return False
 
 
-def check_zipfile(canvas_zip, parts: list[str] = None):
+def check_zipfile(canvas_zip, parts: list[str] = None, report=True):
     compliance = {}
     with zipfile.ZipFile(canvas_zip, "r") as zf:
         for submission in zf.infolist():
             res = re.match(r"([^\W_]+)(?:_\w+)*_(\d+)_(\d+)_(.+)", submission.filename)
             student = Student(*res.groups())
-
             compliance[student] = Compliance()
+
             with tempfile.TemporaryDirectory() as temp_dir:
                 with zipfile.ZipFile(zf.open(submission)) as student_zip:
                     student_zip.extractall(temp_dir)
                     cleanup_files(temp_dir)
 
-                    compliance[student].folders = check_folders(parts, temp_dir)
-                    compliance[student].report = check_report(temp_dir)
+                    if parts:
+                        compliance[student].folders = check_folders(parts, temp_dir)
+                    if report:
+                        compliance[student].report = check_report(temp_dir)
 
     pprint({k: v for k, v in compliance.items() if not v.report})
 
