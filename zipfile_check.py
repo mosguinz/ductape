@@ -1,3 +1,4 @@
+import os
 import shutil
 import zipfile
 import re
@@ -6,6 +7,11 @@ import tempfile
 
 from dataclasses import dataclass
 from pprint import pprint
+
+import requests
+
+# For messaging feature, set Canvas token here or in your environment variable.
+CANVAS_TOKEN = "1234"
 
 
 @dataclass
@@ -60,7 +66,7 @@ def check_report(temp_dir: str) -> bool:
     return False
 
 
-def check_zipfile(canvas_zip, parts: list[str] = None, report=True):
+def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
     compliance = {}
     with zipfile.ZipFile(canvas_zip, "r") as zf:
         for submission in zf.infolist():
@@ -78,8 +84,35 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True):
                     if report:
                         compliance[student].report = check_report(temp_dir)
 
-    pprint({k: v for k, v in compliance.items() if not v.report})
+    pprint(compliance)
+    # pprint({k: v for k, v in compliance.items() if not v.report})
 
 
-def send_message():
-    pass
+def send_message(assignment_name: str, canvas_token=None, debug=True):
+    canvas_token = canvas_token or os.getenv("CANVAS_TOKEN") or CANVAS_TOKEN
+    if not canvas_token:
+        raise ValueError("No Canvas token found")
+
+    data = {
+        "recipients": [os.getenv("MY_CANVAS_ID")],
+        "body": """
+        test
+        test
+        multiline
+        pls dedent
+        """,
+        "subject": "Courtesy Notice: Assignment 02 format",
+        "force_new": True,
+        "group_conversation": False,
+    }
+
+    if debug:
+        data["recipients"] = [os.getenv("MY_CANVAS_ID")]
+
+    with requests.post(
+        url="https://sfsu.instructure.com/api/v1/conversations",
+        headers={"Authorization": f"Bearer {canvas_token}"},
+        data=data,
+    ) as req:
+        pprint(req.headers)
+        pprint(req.json())
