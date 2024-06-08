@@ -3,7 +3,7 @@
 *.log
 *.log.*
 .env
-**/._DS_Store
+*/**/._DS_Store
 zip_output/
 report/
 report.html
