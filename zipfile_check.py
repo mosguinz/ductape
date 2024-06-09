@@ -91,28 +91,56 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
                     cleanup_files(temp_dir)
 
                     if parts:
-                        compliance[student].folders = check_folders(parts, temp_dir)
+                        compliance.folders = check_folders(parts, temp_dir)
                     if report:
-                        compliance[student].report = check_report(temp_dir)
+                        compliance.report_name = check_report(temp_dir)
 
-    pprint(compliance)
+            student = Student(name=res[1],
+                              canvas_id=res[2],
+                              sis_id=res[3],
+                              filename=original_filename,
+                              compliance=compliance)
+            students.append(student)
+
+    return students
     # pprint({k: v for k, v in compliance.items() if not v.report})
 
 
-def send_message(assignment_name: str, canvas_token=None, debug=True):
+def send_message(assignment_name: str, parts: list[str], student: Student, canvas_token=None, debug=True):
     canvas_token = canvas_token or os.getenv("CANVAS_TOKEN") or CANVAS_TOKEN
     if not canvas_token:
         raise ValueError("No Canvas token found")
+    messages = [
+        "You are receiving this message because an automated check has found that your submission may not be "
+        "compliant with the grading policy.",
+        f"Your submission for Assignment {assignment_name} may receive a zero for one or more of the following "
+        "reasons:\n"
+    ]
+
+    if student.compliance.zipfile_name is False:
+        messages.append("  - Your submission ZIP file is not named correctly. It should be in the format: "
+                        f"FirstLast-Assignment-{assignment_name}.zip")
+    if student.compliance.folders is False:
+        if len(parts) > 2:
+            s = ", ".join(parts[:-1])
+            s += ", and " + parts[-1]
+        else:
+            s = " and ".join(parts)
+        messages.append(f"  - Your submission do not appear to contain folders for one or more of the following parts: {s}.")
+    if student.compliance.report_name is False:
+        messages.append(f"  - Your assignment report is not named correctly. Your report should be in the format: "
+                        f"FirstLast-Assignment-{assignment_name}-Report.pdf")
+
+    messages.append("\nBe sure to update your submission before the deadline to avoid penalties. Failure to do so may "
+                    "result in a zero for some or all parts of the assignment.")
+    messages.append("This is an automated check. If you believe this message was sent in error, please let us know.")
+    body = "\n".join(messages)
+    print(body)
 
     data = {
-        "recipients": [os.getenv("MY_CANVAS_ID")],
-        "body": """
-        test
-        test
-        multiline
-        pls dedent
-        """,
-        "subject": "Courtesy Notice: Assignment 02 format",
+        "recipients": student.canvas_id,
+        "body": body,
+        "subject": f"Courtesy Notice: Assignment {assignment_name} format",
         "force_new": True,
         "group_conversation": False,
     }
@@ -130,7 +158,9 @@ def send_message(assignment_name: str, canvas_token=None, debug=True):
 
 
 if __name__ == '__main__':
-    students = check_zipfile("submissions.zip", ["c", "d"])
+    parts = ["C", "D"]
+    students = check_zipfile("submissions.zip", parts)
     for student in students:
         if not student.compliance:
             pprint(student)
+            send_message("01", parts, student)
