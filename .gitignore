@@ -3,13 +3,12 @@
 *.log
 *.log.*
 .env
-*/**/._DS_Store
+.DS_Store
 zip_output/
 report/
 report.html
 online_solutions/
 moss_reports/
-starters/
 submissions/
 __pycache__/
 .idea/
