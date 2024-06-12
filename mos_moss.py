@@ -1,15 +1,14 @@
-import zipfile
-import os
-import re
+import argparse
 import glob
 import logging
 import logging.handlers
-import argparse
-import shutil
+import os
 import pprint
-import sys
 import random
-
+import re
+import shutil
+import sys
+import zipfile
 from datetime import datetime
 from pathlib import Path
 
@@ -82,12 +81,7 @@ def list_files(folder: str, language="") -> list[str]:
 
     new_files = []
     for f in files:
-        if (
-            os.path.isfile(f)
-            and not f.endswith("pdf")
-            and not f.endswith("jar")
-            and os.path.getsize(f) > 0
-        ):
+        if os.path.isfile(f) and not f.endswith("pdf") and not f.endswith("jar") and os.path.getsize(f) > 0:
             new_files.append(f)
     return new_files
 
@@ -107,11 +101,11 @@ def create_moss_comments(**kwargs) -> str:
 
 
 def stage_moss_files(
-    zip_output: str,
-    language: str = "",
-    max_submissions=0,
-    base_files=None,
-    solutions=None,
+        zip_output: str,
+        language: str = "",
+        max_submissions=0,
+        base_files=None,
+        solutions=None,
 ) -> mosspy.Moss:
     moss = mosspy.Moss(user_id=None, language=language)
 
@@ -132,9 +126,7 @@ def stage_moss_files(
         moss.addFile(f)
 
     if not files:
-        raise FileNotFoundError(
-            "No files to upload. Checked the provided ZIP file and language"
-        )
+        raise FileNotFoundError("No files to upload. Checked the provided ZIP file and language")
 
     if base_files:
         files = list_files(base_files, language)
@@ -146,9 +138,7 @@ def stage_moss_files(
     if solutions:
         files = list_files(solutions, language)
         if not files:
-            raise FileNotFoundError(
-                f"{solutions} returned no matches for online solutions"
-            )
+            raise FileNotFoundError(f"{solutions} returned no matches for online solutions")
         for f in files:
             moss.addFile(f)
 
@@ -165,9 +155,7 @@ def stage_moss_files(
     return moss
 
 
-def send_to_moss(
-    moss: mosspy.Moss, report_path: str, user_id=None, no_report=False, count=1
-):
+def send_to_moss(moss: mosspy.Moss, report_path: str, user_id=None, no_report=False, count=1):
     moss.user_id = user_id or os.getenv("MOSS_ID") or MOSS_ID
 
     if not moss.user_id:
@@ -186,15 +174,11 @@ def send_to_moss(
 
     log.info("Downloading report")
     Path(f"{report_path}/report{count}").mkdir(parents=True, exist_ok=True)
-    mosspy.download_report(
-        url, f"{report_path}/report{count}", connections=8, log_level=log.level
-    )
+    mosspy.download_report(url, f"{report_path}/report{count}", connections=8, log_level=log.level)
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Utility for unzipping Canvas submission and uploading files to MOSS."
-    )
+    parser = argparse.ArgumentParser(description="Utility for unzipping Canvas submission and uploading files to MOSS.")
 
     parser.add_argument("zip_file", help="The submission ZIP file from Canvas.")
     parser.add_argument("language", help="Programming language for the assignment.")
@@ -284,9 +268,7 @@ def parse_args():
 
 
 def setup_logger():
-    file_handler = logging.FileHandler(
-        filename=f"mos_moss_{datetime.now().isoformat()}.log", mode="w"
-    )
+    file_handler = logging.FileHandler(filename=f"mos_moss_{datetime.now().isoformat()}.log", mode="w")
     logging.basicConfig(
         level=logging.DEBUG,
         format="%(asctime)s [%(threadName)s] [%(levelname)s] %(message)s",
@@ -294,7 +276,7 @@ def setup_logger():
     )
 
 
-if __name__ == "__main__":
+def main():
     opt = parse_args()
 
     setup_logger()

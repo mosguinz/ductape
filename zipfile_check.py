@@ -1,10 +1,9 @@
-import os
-import shutil
-import zipfile
-import re
 import glob
+import os
+import re
+import shutil
 import tempfile
-
+import zipfile
 from dataclasses import dataclass
 from pprint import pprint
 
@@ -95,11 +94,9 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
                     if report:
                         compliance.report_name = check_report(temp_dir)
 
-            student = Student(name=res[1],
-                              canvas_id=res[2],
-                              sis_id=res[3],
-                              filename=original_filename,
-                              compliance=compliance)
+            student = Student(
+                name=res[1], canvas_id=res[2], sis_id=res[3], filename=original_filename, compliance=compliance
+            )
             students.append(student)
 
     return students
@@ -114,25 +111,33 @@ def send_message(assignment_name: str, parts: list[str], student: Student, canva
         "You are receiving this message because an automated check has found that your submission may not be "
         "compliant with the grading policy.",
         f"Your submission for Assignment {assignment_name} may receive a zero for one or more of the following "
-        "reasons:\n"
+        "reasons:\n",
     ]
 
     if student.compliance.zipfile_name is False:
-        messages.append("  - Your submission ZIP file is not named correctly. It should be in the format: "
-                        f"FirstLast-Assignment-{assignment_name}.zip")
+        messages.append(
+            "  - Your submission ZIP file is not named correctly. It should be in the format: "
+            f"FirstLast-Assignment-{assignment_name}.zip"
+        )
     if student.compliance.folders is False:
         if len(parts) > 2:
             s = ", ".join(parts[:-1])
             s += ", and " + parts[-1]
         else:
             s = " and ".join(parts)
-        messages.append(f"  - Your submission do not appear to contain folders for one or more of the following parts: {s}.")
+        messages.append(
+            f"  - Your submission do not appear to contain folders for one or more of the following parts: {s}."
+        )
     if student.compliance.report_name is False:
-        messages.append(f"  - Your assignment report is not named correctly. Your report should be in the format: "
-                        f"FirstLast-Assignment-{assignment_name}-Report.pdf")
+        messages.append(
+            f"  - Your assignment report is not named correctly. Your report should be in the format: "
+            f"FirstLast-Assignment-{assignment_name}-Report.pdf"
+        )
 
-    messages.append("\nBe sure to update your submission before the deadline to avoid penalties. Failure to do so may "
-                    "result in a zero for some or all parts of the assignment.")
+    messages.append(
+        "\nBe sure to update your submission before the deadline to avoid penalties. Failure to do so may "
+        "result in a zero for some or all parts of the assignment."
+    )
     messages.append("This is an automated check. If you believe this message was sent in error, please let us know.")
     body = "\n".join(messages)
     print(body)
@@ -149,18 +154,18 @@ def send_message(assignment_name: str, parts: list[str], student: Student, canva
         data["recipients"] = [os.getenv("MY_CANVAS_ID")]
 
     with requests.post(
-        url="https://sfsu.instructure.com/api/v1/conversations",
-        headers={"Authorization": f"Bearer {canvas_token}"},
-        data=data,
+            url="https://sfsu.instructure.com/api/v1/conversations",
+            headers={"Authorization": f"Bearer {canvas_token}"},
+            data=data,
     ) as req:
         pprint(req.headers)
         pprint(req.json())
 
 
-if __name__ == '__main__':
+def main():
     parts = ["C", "D"]
     students = check_zipfile("submissions.zip", parts)
     for student in students:
         if not student.compliance:
             pprint(student)
-            send_message("01", parts, student)
+            # send_message("01", parts, student)
