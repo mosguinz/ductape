@@ -16,12 +16,12 @@ CANVAS_TOKEN = "1234"
 
 @dataclass
 class Compliance:
-    folders: bool = None
+    zip_name: bool = None
     report_name: bool = None
-    zipfile_name: bool = None
+    required_folders: bool = None
 
     def __bool__(self):
-        return all((self.folders, self.report_name, self.zipfile_name))
+        return all((self.required_folders, self.report_name, self.zip_name))
 
 
 @dataclass
@@ -81,9 +81,9 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
             compliance = Compliance()
 
             if re.match(r"\w+-Assignment-\w+(-\d)?\.zip", original_filename):
-                compliance.zipfile_name = True
+                compliance.zip_name = True
             else:
-                compliance.zipfile_name = False
+                compliance.zip_name = False
 
             with tempfile.TemporaryDirectory() as temp_dir:
                 with zipfile.ZipFile(zf.open(submission)) as student_zip:
@@ -91,7 +91,7 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
                     cleanup_files(temp_dir)
 
                     if parts:
-                        compliance.folders = check_folders(parts, temp_dir)
+                        compliance.required_folders = check_folders(parts, temp_dir)
                     if report:
                         compliance.report_name = check_report(temp_dir)
 
@@ -115,12 +115,12 @@ def send_message(assignment_name: str, parts: list[str], student: Student, canva
         "reasons:\n",
     ]
 
-    if student.compliance.zipfile_name is False:
+    if student.compliance.zip_name is False:
         messages.append(
             "  - Your submission ZIP file is not named correctly. It should be in the format: "
             f"FirstLast-Assignment-{assignment_name}.zip"
         )
-    if student.compliance.folders is False:
+    if student.compliance.required_folders is False:
         if len(parts) > 2:
             s = ", ".join(parts[:-1])
             s += ", and " + parts[-1]
@@ -190,7 +190,7 @@ def display_students(students):
     cross = "\033[41m ✘ \033[0m"  # Red background cross mark
 
     # Table headers
-    headers = ["Name", "Canvas ID", "Filename", "F", "R", "Z"]
+    headers = ["Name", "Canvas ID", "Filename", "Z", "R", "F"]
     rows = []
 
     # Prepare rows for printing
@@ -199,9 +199,9 @@ def display_students(students):
             student.name,
             student.canvas_id,
             student.filename,
-            tick if student.compliance.folders else cross,
+            tick if student.compliance.zip_name else cross,
             tick if student.compliance.report_name else cross,
-            tick if student.compliance.zipfile_name else cross,
+            tick if student.compliance.required_folders else cross,
         ]
         rows.append(row)
 
@@ -212,6 +212,10 @@ def display_students(students):
     # Print summary
     print(f"{len(students)} submissions: {len(good)} compliant, {len(bad)} non-compliant.")
     print("Displaying non-compliant submissions first.")
+    print("Z = ZIP file name compliance")
+    print("R = Report name compliance")
+    print("F = Required folder(s) compliance")
+    print()
 
     # Print headers
     header_str = " | ".join(
