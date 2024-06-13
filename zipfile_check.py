@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pprint import pprint
 
 import requests
+import seedir
 
 # For messaging feature, set Canvas token here or in your environment variable.
 CANVAS_TOKEN = "1234"
@@ -82,17 +83,24 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
             res = re.match(r"([^\W_]+)(?:_\w+)*_(\d+)_(\d+)_(.+)", submission.filename)
             original_filename = res[4]
             compliance = Compliance()
-            compliance.zip_name = original_filename
 
+            # Check ZIP file name
+            compliance.zip_name = original_filename
             if re.match(r"\w+-Assignment-\w+(-\d)?\.zip", original_filename):
                 compliance.zip_name_compliant = True
             else:
                 compliance.zip_name_compliant = False
 
+            # Check structure and report name
             with tempfile.TemporaryDirectory() as temp_dir:
                 with zipfile.ZipFile(zf.open(submission)) as student_zip:
                     student_zip.extractall(temp_dir)
                     cleanup_files(temp_dir)
+
+                    # Generate the directory tree for display
+                    dir_tree = seedir.fakedir(temp_dir, itemlimit=100, depthlimit=3, exclude_folders=".git")
+                    dir_tree.name = original_filename
+                    compliance.folder_structure = dir_tree.seedir(printout=False)
 
                     if parts:
                         compliance.folders_compliant = check_folders(parts, temp_dir)
@@ -179,14 +187,22 @@ def parse_args():
         action="store_true",
         default=False,
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Verbose mode. Prints out directory for each submission.",
+        action="store_true",
+        default=False,
+    )
 
     return parser.parse_args()
 
 
-def display_submissions(submissions: list[Submission]) -> None:
+def display_submissions(submissions: list[Submission], verbose: bool) -> None:
     good, bad = [], []
     for submission in submissions:
         good.append(submission) if submission.compliance else bad.append(submission)
+    submissions = *bad, *good
 
     tick = "\033[42m ✔ \033[0m"  # Green background check mark
     cross = "\033[41m ✘ \033[0m"  # Red background cross mark
@@ -196,7 +212,7 @@ def display_submissions(submissions: list[Submission]) -> None:
     rows = []
 
     # Prepare rows for printing
-    for submission in *bad, *good:
+    for submission in submissions:
         row = [
             submission.student_name,
             submission.canvas_id,
@@ -223,15 +239,24 @@ def display_submissions(submissions: list[Submission]) -> None:
     header_str = " | ".join(
         f"{headers[i]:<{col_widths[i]}}" if i < 3 else f"{headers[i]:^{col_widths[i]}}" for i in range(len(headers))
     )
+    line = "-" * len(header_str)
     print(header_str)
-    print("-" * len(header_str))
+    print(line)
 
     # Print each row
-    for row in rows:
+    for i, row in enumerate(rows):
+        if verbose:
+            print(header_str)
+
         row_str = " | ".join(
             f"{row[i]:<{col_widths[i]}}" if i < 3 else f"{row[i]:^{col_widths[i]}}" for i in range(len(row))
         )
         print(row_str)
+
+        if verbose:
+            submission = submissions[i]
+            print(submission.compliance.folder_structure)
+            print(line)
 
 
 def main():
@@ -240,4 +265,4 @@ def main():
 
     submissions = check_zipfile(canvas_zip=opt.zip_file, parts=opt.parts, report=opt.report)
 
-    display_submissions(submissions)
+    display_submissions(submissions, verbose=opt.verbose)
