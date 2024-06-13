@@ -116,6 +116,18 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
+name = "natsort"
+version = "8.4.0"
+description = "Simple yet flexible natural sorting in Python."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+fast = ["fastnumbers (>=2.0.0)"]
+icu = ["PyICU (>=1.0.0)"]
+
+[[package]]
 name = "packaging"
 version = "24.1"
 description = "Core utilities for Python packages"
@@ -174,6 +186,20 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
+name = "seedir"
+version = "0.4.2"
+description = "Package for creating, editing, and reading folder tree diagrams."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+natsort = "*"
+
+[package.extras]
+emoji = ["emoji"]
+
+[[package]]
 name = "soupsieve"
 version = "2.5"
 description = "A modern CSS selector implementation for Beautiful Soup."
@@ -198,7 +224,7 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.11"
-content-hash = "2329ed2a26c2325d20f8d0368e3487c433ef914960c8c4654aaffc17d8a26558"
+content-hash = "45aa718f42aaec26b95867458ebceff9b51faef575884e952fa2fd1b6ebd5e24"
 
 [metadata.files]
 beautifulsoup4 = []
@@ -211,10 +237,12 @@ idna = []
 lxml = []
 mosspy = []
 mypy-extensions = []
+natsort = []
 packaging = []
 pathspec = []
 platformdirs = []
 python-dotenv = []
 requests = []
+seedir = []
 soupsieve = []
 urllib3 = []

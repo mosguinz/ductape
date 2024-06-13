@@ -9,6 +9,7 @@ python = "^3.11"
 python-dotenv = "^1.0.1"
 mosspy = "^1.0.9"
 requests = "^2.32.3"
+seedir = "^0.4.2"
 
 [tool.poetry.dev-dependencies]
 black = "^24.4.2"
