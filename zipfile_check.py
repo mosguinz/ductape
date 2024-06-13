@@ -29,8 +29,8 @@ class Compliance:
 
 
 @dataclass
-class Student:
-    name: str
+class Submission:
+    student_name: str
     canvas_id: str
     sis_id: str
     compliance: Compliance
@@ -75,7 +75,7 @@ def check_report(temp_dir: str) -> bool:
 
 
 def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
-    students = []
+    submissions = []
 
     with zipfile.ZipFile(canvas_zip, "r") as zf:
         for submission in zf.infolist():
@@ -99,14 +99,14 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
                     if report:
                         compliance.report_name_compliant = check_report(temp_dir)
 
-            student = Student(name=res[1], canvas_id=res[2], sis_id=res[3], compliance=compliance)
-            students.append(student)
+            submission = Submission(student_name=res[1], canvas_id=res[2], sis_id=res[3], compliance=compliance)
+            submissions.append(submission)
 
-    return students
+    return submissions
     # pprint({k: v for k, v in compliance.items() if not v.report})
 
 
-def send_message(assignment_name: str, parts: list[str], student: Student, canvas_token=None, debug=True):
+def send_message(assignment_name: str, parts: list[str], submission: Submission, canvas_token=None, debug=True):
     canvas_token = canvas_token or os.getenv("CANVAS_TOKEN") or CANVAS_TOKEN
     if not canvas_token:
         raise ValueError("No Canvas token found")
@@ -117,12 +117,12 @@ def send_message(assignment_name: str, parts: list[str], student: Student, canva
         "reasons:\n",
     ]
 
-    if student.compliance.zip_name_compliant is False:
+    if submission.compliance.zip_name_compliant is False:
         messages.append(
             "  - Your submission ZIP file is not named correctly. It should be in the format: "
             f"FirstLast-Assignment-{assignment_name}.zip"
         )
-    if student.compliance.folders_compliant is False:
+    if submission.compliance.folders_compliant is False:
         if len(parts) > 2:
             s = ", ".join(parts[:-1])
             s += ", and " + parts[-1]
@@ -131,7 +131,7 @@ def send_message(assignment_name: str, parts: list[str], student: Student, canva
         messages.append(
             f"  - Your submission do not appear to contain folders for one or more of the following parts: {s}."
         )
-    if student.compliance.report_name_compliant is False:
+    if submission.compliance.report_name_compliant is False:
         messages.append(
             f"  - Your assignment report is not named correctly. Your report should be in the format: "
             f"FirstLast-Assignment-{assignment_name}-Report.pdf"
@@ -146,7 +146,7 @@ def send_message(assignment_name: str, parts: list[str], student: Student, canva
     print(body)
 
     data = {
-        "recipients": student.canvas_id,
+        "recipients": submission.canvas_id,
         "body": body,
         "subject": f"Courtesy Notice: Assignment {assignment_name} format",
         "force_new": True,
@@ -183,10 +183,10 @@ def parse_args():
     return parser.parse_args()
 
 
-def display_students(students):
+def display_submissions(submissions: list[Submission]) -> None:
     good, bad = [], []
-    for student in students:
-        good.append(student) if student.compliance else bad.append(student)
+    for submission in submissions:
+        good.append(submission) if submission.compliance else bad.append(submission)
 
     tick = "\033[42m ✔ \033[0m"  # Green background check mark
     cross = "\033[41m ✘ \033[0m"  # Red background cross mark
@@ -196,14 +196,14 @@ def display_students(students):
     rows = []
 
     # Prepare rows for printing
-    for student in *bad, *good:
+    for submission in *bad, *good:
         row = [
-            student.name,
-            student.canvas_id,
-            student.compliance.zip_name,
-            tick if student.compliance.zip_name_compliant else cross,
-            tick if student.compliance.report_name_compliant else cross,
-            tick if student.compliance.folders_compliant else cross,
+            submission.student_name,
+            submission.canvas_id,
+            submission.compliance.zip_name,
+            tick if submission.compliance.zip_name_compliant else cross,
+            tick if submission.compliance.report_name_compliant else cross,
+            tick if submission.compliance.folders_compliant else cross,
         ]
         rows.append(row)
 
@@ -212,7 +212,7 @@ def display_students(students):
     col_widths[-3:] = 3, 3, 3  # fixed size for last three columns to ignore ANSI codes
 
     # Print summary
-    print(f"{len(students)} submissions: {len(good)} compliant, {len(bad)} non-compliant.")
+    print(f"{len(submissions)} submissions: {len(good)} compliant, {len(bad)} non-compliant.")
     print("Displaying non-compliant submissions first.")
     print("Z = ZIP file name compliance")
     print("R = Report name compliance")
@@ -238,6 +238,6 @@ def main():
     opt = parse_args()
     pprint(opt)
 
-    students = check_zipfile(canvas_zip=opt.zip_file, parts=opt.parts, report=opt.report)
+    submissions = check_zipfile(canvas_zip=opt.zip_file, parts=opt.parts, report=opt.report)
 
-    display_students(students)
+    display_submissions(submissions)
