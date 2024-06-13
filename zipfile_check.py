@@ -1,3 +1,4 @@
+import argparse
 import glob
 import os
 import re
@@ -162,10 +163,75 @@ def send_message(assignment_name: str, parts: list[str], student: Student, canva
         pprint(req.json())
 
 
-def main():
-    parts = ["C", "D"]
-    students = check_zipfile("submissions.zip", parts)
+def parse_args():
+    parser = argparse.ArgumentParser(description="Utility for checking student's submission format.")
+
+    parser.add_argument("zip_file", help="The submission ZIP file from Canvas.")
+    parser.add_argument("-a", "--asmt", help="The assignment name.", required=True)
+    parser.add_argument("-r", "--report", help="Whether a report is required.", action="store_true", default=True)
+    parser.add_argument("-p", "--parts", help="Required folders to be present.", nargs="+")
+    parser.add_argument(
+        "-m",
+        "--send_message",
+        help="If set, a message will be sent to students with non-compliant submissions.",
+        action="store_true",
+        default=False,
+    )
+
+    return parser.parse_args()
+
+
+def display_students(students):
+    good, bad = [], []
     for student in students:
-        if not student.compliance:
-            pprint(student)
-            # send_message("01", parts, student)
+        good.append(student) if student.compliance else bad.append(student)
+
+    tick = "\033[42m ✔ \033[0m"  # Green background check mark
+    cross = "\033[41m ✘ \033[0m"  # Red background cross mark
+
+    # Table headers
+    headers = ["Name", "Canvas ID", "Filename", "F", "R", "Z"]
+    rows = []
+
+    # Prepare rows for printing
+    for student in *bad, *good:
+        row = [
+            student.name,
+            student.canvas_id,
+            student.filename,
+            tick if student.compliance.folders else cross,
+            tick if student.compliance.report_name else cross,
+            tick if student.compliance.zipfile_name else cross,
+        ]
+        rows.append(row)
+
+    # Find maximum column widths for pretty printing
+    col_widths = [max(len(str(cell)) for cell in col) for col in zip(*[headers] + rows)]
+    col_widths[-3:] = 3, 3, 3  # fixed size for last three columns to ignore ANSI codes
+
+    # Print summary
+    print(f"{len(students)} submissions: {len(good)} compliant, {len(bad)} non-compliant.")
+    print("Displaying non-compliant submissions first.")
+
+    # Print headers
+    header_str = " | ".join(
+        f"{headers[i]:<{col_widths[i]}}" if i < 3 else f"{headers[i]:^{col_widths[i]}}" for i in range(len(headers))
+    )
+    print(header_str)
+    print("-" * len(header_str))
+
+    # Print each row
+    for row in rows:
+        row_str = " | ".join(
+            f"{row[i]:<{col_widths[i]}}" if i < 3 else f"{row[i]:^{col_widths[i]}}" for i in range(len(row))
+        )
+        print(row_str)
+
+
+def main():
+    opt = parse_args()
+    pprint(opt)
+
+    students = check_zipfile(canvas_zip=opt.zip_file, parts=opt.parts, report=opt.report)
+
+    display_students(students)
