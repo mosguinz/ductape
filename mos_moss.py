@@ -63,7 +63,8 @@ def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None
             res = re.match(r"(\w+_\w*_\d+\d+)_(.+)\.", submission.filename)
             try:
                 folder_name = res[2] if original_name else res[1]
-            except TypeError:
+            except TypeError:  # if match returns None
+                log.warning("Could parse the Canvas ZIP file, did the format change?")
                 folder_name = submission.filename
 
             log.debug(f"Extracting {folder_name}")
