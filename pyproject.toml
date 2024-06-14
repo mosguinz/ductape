@@ -23,7 +23,8 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 mosmoss = "mos_moss:main"
-zipfile = "zipfile_check:main"
+zipcheck = "zipfile_check:main"
+
 #
 #[packages]
 #mosspy = "*"
