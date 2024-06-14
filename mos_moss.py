@@ -101,11 +101,11 @@ def create_moss_comments(**kwargs) -> str:
 
 
 def stage_moss_files(
-        zip_output: str,
-        language: str = "",
-        max_submissions=0,
-        base_files=None,
-        solutions=None,
+    zip_output: str,
+    language: str = "",
+    max_submissions=0,
+    base_files=None,
+    solutions=None,
 ) -> mosspy.Moss:
     moss = mosspy.Moss(user_id=None, language=language)
 
@@ -182,6 +182,8 @@ def parse_args():
 
     parser.add_argument("zip_file", help="The submission ZIP file from Canvas.")
     parser.add_argument("language", help="Programming language for the assignment.")
+
+    parser.add_argument("--extract-only", help="Only extract the Canvas ZIP file.", action="store_true")
 
     parser.add_argument(
         "--no-report",
@@ -288,6 +290,10 @@ def main():
         zip_output=opt.zip_output,
         original_name=opt.original_name,
     )
+
+    if opt.extract_only:
+        log.info("Extract only mode. Stopping.")
+        return
 
     for n in range(1, opt.repeat + 1):
         log.info(f"Sending batch {n}/{opt.repeat} to MOSS")
