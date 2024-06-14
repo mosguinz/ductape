@@ -37,11 +37,11 @@ def flatten_folder(destination):
     content = os.listdir(destination)
     if len(content) == 1:
         folder = os.path.join(destination, content[0])
-
-        log.debug(f"Flattening {folder}")
-        for f in os.listdir(folder):
-            shutil.move(os.path.join(folder, f), destination)
-        os.rmdir(folder)
+        if os.path.isdir(folder):
+            log.debug(f"Flattening {folder}")
+            for f in os.listdir(folder):
+                shutil.move(os.path.join(folder, f), destination)
+            os.rmdir(folder)
 
 
 def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None:
