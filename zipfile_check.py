@@ -98,9 +98,11 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
                     cleanup_files(temp_dir)
 
                     # Generate the directory tree for display
-                    dir_tree = seedir.fakedir(temp_dir, itemlimit=100, depthlimit=3, exclude_folders=".git")
+                    dir_tree = seedir.fakedir(temp_dir)
                     dir_tree.name = original_filename
-                    compliance.folder_structure = dir_tree.seedir(printout=False)
+                    compliance.folder_structure = dir_tree.seedir(
+                        printout=False, exclude_folders=".git", itemlimit=5, depthlimit=3, beyond="content"
+                    )
 
                     if parts:
                         compliance.folders_compliant = check_folders(parts, temp_dir)
