@@ -55,6 +55,13 @@ def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None
     :param original_name: Whether to extract into folders with the original ZIP name.
     :return: None
     """
+    # If path already exists, first check if we should write to it.
+    if os.path.exists(zip_output):
+        if not os.path.isdir(zip_output):
+            raise TypeError(f"{zip_output} is not a directory.")
+        if os.listdir(zip_output):
+            raise FileExistsError(f"{zip_output} is not empty.")
+
     with zipfile.ZipFile(canvas_zip, "r") as zf:
         for submission in zf.infolist():
             # Canvas ZIP name format (may contain -i
@@ -72,11 +79,6 @@ def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None
             b = zf.open(submission, "r")
             with zipfile.ZipFile(b) as student_zip:
                 path = os.path.join(zip_output, folder_name)
-
-                if not os.path.isdir(path):
-                    raise TypeError("Provided path for ZIP output is not a directory.")
-                if os.listdir(path):
-                    raise FileExistsError(f"{zip_output} is not empty.")
 
                 student_zip.extractall(path=path)
                 cleanup_files(path)
