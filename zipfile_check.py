@@ -79,14 +79,16 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
     submissions = []
 
     with zipfile.ZipFile(canvas_zip, "r") as zf:
-        for submission in zf.infolist():
+        files = sorted(zf.infolist(), key=lambda x: x.filename)
+        for submission in files:
+            print(submission.filename)
             res = re.match(r"([^\W_]+)(?:_\w+)*_(\d+)_(\d+)_(.+)", submission.filename)
             original_filename = res[4]
             compliance = Compliance()
 
             # Check ZIP file name
             compliance.zip_name = original_filename
-            if re.match(r"\w+-Assignment-\w+(-\d)?\.zip", original_filename):
+            if re.match(r"\w+-Assignment-\w+(-\d)?\.zip", original_filename.replace("_", "-")):
                 compliance.zip_name_compliant = True
             else:
                 compliance.zip_name_compliant = False
