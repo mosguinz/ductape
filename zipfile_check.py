@@ -120,11 +120,14 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
     # pprint({k: v for k, v in compliance.items() if not v.report})
 
 
-def send_message(assignment_name: str, parts: list[str], submission: Submission, canvas_token=None, debug=True):
+def send_message(assignment_name: str, parts: list[str], submission: Submission, canvas_token=None, debug=False):
     canvas_token = canvas_token or os.getenv("CANVAS_TOKEN") or CANVAS_TOKEN
 
     if not canvas_token:
         raise ValueError("No Canvas token found")
+    if submission.compliance:
+        return
+
     messages = [
         "You are receiving this message because an automated check has found that your submission may not be "
         "compliant with the grading policy.",
@@ -138,17 +141,19 @@ def send_message(assignment_name: str, parts: list[str], submission: Submission,
             f"FirstLast-Assignment-{assignment_name}.zip"
         )
     if submission.compliance.folders_compliant is False:
-        if len(parts) > 2:
-            s = ", ".join(parts[:-1])
-            s += ", and " + parts[-1]
+        if len(parts) == 1:
+            s = f"a folder for part {parts[0]}"
+        elif len(parts) == 2:
+            s = f"folders for parts {parts[0]} and {parts[1]}"
         else:
-            s = " and ".join(parts)
-        messages.append(
-            f"  - Your submission do not appear to contain folders for one or more of the following parts: {s}."
-        )
+            s = "folders for one more of the following parts: "
+            s += ", ".join(parts[:-1])
+            s += ", and " + parts[-1]
+        messages.append(f"  - Your submission do not appear to contain {s}.")
     if submission.compliance.report_name_compliant is False:
         messages.append(
-            f"  - Your assignment report is not named correctly. Your report should be in the format: "
+            f"  - Your assignment report is either: missing, not named correctly, or was submitted in an incorrect "
+            f"file format. Your report should be saved as a PDF and named in the format: "
             f"FirstLast-Assignment-{assignment_name}-Report.pdf"
         )
 
