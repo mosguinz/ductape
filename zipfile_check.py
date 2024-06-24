@@ -8,8 +8,11 @@ import zipfile
 from dataclasses import dataclass
 from pprint import pprint
 
+import dotenv
 import requests
 import seedir
+
+dotenv.load_dotenv()
 
 # For messaging feature, set Canvas token here or in your environment variable.
 CANVAS_TOKEN = "1234"
@@ -278,3 +281,7 @@ def main():
     submissions = check_zipfile(canvas_zip=opt.zip_file, parts=opt.parts, report=opt.report)
 
     display_submissions(submissions, verbose=opt.verbose)
+
+    if opt.send_message:
+        for submission in submissions:
+            send_message(assignment_name=opt.asmt, parts=opt.parts, submission=submission)
