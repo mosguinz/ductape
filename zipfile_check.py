@@ -32,8 +32,8 @@ class Compliance:
 @dataclass
 class Submission:
     student_name: str
-    canvas_id: str
-    sis_id: str
+    canvas_id: int
+    sis_id: int
     compliance: Compliance
 
     def __hash__(self):
@@ -111,7 +111,9 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
                     if report:
                         compliance.report_name_compliant = check_report(temp_dir)
 
-            submission = Submission(student_name=res[1], canvas_id=res[2], sis_id=res[3], compliance=compliance)
+            submission = Submission(
+                student_name=res[1], canvas_id=int(res[2]), sis_id=int(res[3]), compliance=compliance
+            )
             submissions.append(submission)
 
     return submissions
@@ -120,6 +122,7 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
 
 def send_message(assignment_name: str, parts: list[str], submission: Submission, canvas_token=None, debug=True):
     canvas_token = canvas_token or os.getenv("CANVAS_TOKEN") or CANVAS_TOKEN
+
     if not canvas_token:
         raise ValueError("No Canvas token found")
     messages = [
