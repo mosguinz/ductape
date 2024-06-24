@@ -166,51 +166,26 @@ def send_message(assignment_name: str, parts: list[str], submission: Submission,
     )
     messages.append("This is an automated check. If you believe this message was sent in error, please let us know.")
     body = "\n".join(messages)
-    print(body)
 
     data = {
-        "recipients": submission.canvas_id,
+        "recipients": [submission.canvas_id],
         "body": body,
         "subject": f"Courtesy Notice: Assignment {assignment_name} format",
         "force_new": True,
         "group_conversation": False,
     }
+    pprint(data)
 
     if debug:
-        data["recipients"] = [os.getenv("MY_CANVAS_ID")]
+        data["recipients"] = [int(os.getenv("MY_CANVAS_ID"))]
 
     with requests.post(
-            url="https://sfsu.instructure.com/api/v1/conversations",
-            headers={"Authorization": f"Bearer {canvas_token}"},
-            data=data,
+        url="https://sfsu.instructure.com/api/v1/conversations",
+        headers={"Authorization": f"Bearer {canvas_token}"},
+        data=data,
     ) as req:
         pprint(req.headers)
         pprint(req.json())
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Utility for checking student's submission format.")
-
-    parser.add_argument("zip_file", help="The submission ZIP file from Canvas.")
-    parser.add_argument("-a", "--asmt", help="The assignment name.", required=True)
-    parser.add_argument("-r", "--report", help="Whether a report is required.", action="store_true", default=True)
-    parser.add_argument("-p", "--parts", help="Required folders to be present.", nargs="+")
-    parser.add_argument(
-        "-m",
-        "--send_message",
-        help="If set, a message will be sent to students with non-compliant submissions.",
-        action="store_true",
-        default=False,
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        help="Verbose mode. Prints out directory for each submission.",
-        action="store_true",
-        default=False,
-    )
-
-    return parser.parse_args()
 
 
 def display_submissions(submissions: list[Submission], verbose: bool) -> None:
@@ -272,6 +247,31 @@ def display_submissions(submissions: list[Submission], verbose: bool) -> None:
             submission = submissions[i]
             print(submission.compliance.folder_structure)
             print(line)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Utility for checking student's submission format.")
+
+    parser.add_argument("zip_file", help="The submission ZIP file from Canvas.")
+    parser.add_argument("-a", "--asmt", help="The assignment name.", required=True)
+    parser.add_argument("-r", "--report", help="Whether a report is required.", action="store_true", default=True)
+    parser.add_argument("-p", "--parts", help="Required folders to be present.", nargs="+")
+    parser.add_argument(
+        "-m",
+        "--send_message",
+        help="If set, a message will be sent to students with non-compliant submissions.",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Verbose mode. Prints out directory for each submission.",
+        action="store_true",
+        default=False,
+    )
+
+    return parser.parse_args()
 
 
 def main():
