@@ -10,19 +10,20 @@ python-dotenv = "^1.0.1"
 mosspy = "^1.0.9"
 requests = "^2.32.3"
 seedir = "^0.4.2"
+typer = {extras = ["all"], version = "^0.12.3"}
 
 [tool.poetry.dev-dependencies]
 black = "^24.4.2"
 
 [tool.black]
-line-length = 120
+line-length = 100
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-mosmoss = "mos_moss:main"
+mos-moss = "mos_moss.main:app"
 zipcheck = "zipfile_check:main"
 
 #
