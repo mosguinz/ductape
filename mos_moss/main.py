@@ -6,14 +6,14 @@ from typing_extensions import Annotated
 app = typer.Typer()
 
 
-@app.callback()
+@app.callback(no_args_is_help=True)
 def callback():
     """Mos' MOSS utility... and other things."""
     pass
 
 
 @app.command()
-def zip_check(
+def format_check(
     zip_file: Annotated[
         Path,
         typer.Argument(
