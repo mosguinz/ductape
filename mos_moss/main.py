@@ -4,10 +4,10 @@ import typer
 from rich import print
 from typing_extensions import Annotated
 
-from mos_moss import config as ConfigApp
+from mos_moss import config as Config
 
 app = typer.Typer()
-ConfigApp.load_keys()
+Config.load_keys()
 
 
 @app.callback(no_args_is_help=True)
@@ -18,7 +18,7 @@ def callback():
 
 @app.command()
 def config(
-    key_to_set: Annotated[ConfigApp.ConfigKey, typer.Argument()],
+    key_to_set: Annotated[Config.ConfigKey, typer.Argument()],
     value_to_set: Annotated[str, typer.Argument()] = None,
 ):
     """
@@ -26,18 +26,18 @@ def config(
 
     Configuration keys are saved in the home directory in plaintext file.
     """
-    value = ConfigApp.get_config(key_to_set)
+    value = Config.get_config(key_to_set)
     if not value_to_set:
         typer.echo(value)
         return
     if not value:
         print(
             "[bold red]Warning: [/bold red]"
-            f"The keys will be stored in a plaintext file at {ConfigApp.CONFIG_PATH}."
+            f"The keys will be stored in a plaintext file at {Config.CONFIG_PATH}."
         )
         confirm = typer.confirm("Are you sure you want to continue?")
         if confirm:
-            ConfigApp.set_config(key_to_set, value_to_set)
+            Config.set_config(key_to_set, value_to_set)
 
 
 @app.command()
