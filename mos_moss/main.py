@@ -1,15 +1,43 @@
 from pathlib import Path
 
 import typer
+from rich import print
 from typing_extensions import Annotated
 
+from mos_moss import config as ConfigApp
+
 app = typer.Typer()
+ConfigApp.load_keys()
 
 
 @app.callback(no_args_is_help=True)
 def callback():
     """Mos' MOSS utility... and other things."""
     pass
+
+
+@app.command()
+def config(
+    key_to_set: Annotated[ConfigApp.ConfigKey, typer.Argument()],
+    value_to_set: Annotated[str, typer.Argument()] = None,
+):
+    """
+    Query or set configuration values.
+
+    Configuration keys are saved in the home directory in plaintext file.
+    """
+    value = ConfigApp.get_config(key_to_set)
+    if not value_to_set:
+        typer.echo(value)
+        return
+    if not value:
+        print(
+            "[bold red]Warning: [/bold red]"
+            f"The keys will be stored in a plaintext file at {ConfigApp.CONFIG_PATH}."
+        )
+        confirm = typer.confirm("Are you sure you want to continue?")
+        if confirm:
+            ConfigApp.set_config(key_to_set, value_to_set)
 
 
 @app.command()
