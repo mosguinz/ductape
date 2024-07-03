@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import zipfile
+from pathlib import Path
 
 LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
     "java": ["java"],
@@ -32,7 +33,7 @@ def flatten_folder(destination):
             os.rmdir(folder)
 
 
-def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None:
+def unzip_canvas_submission(canvas_zip: Path, zip_output: Path, original_name=False) -> None:
     """
     Unzip the Canvas submission folder and place them in a folder.
     Set `original_name` to `True` to keep student's ZIP file original name.
@@ -42,6 +43,9 @@ def unzip_canvas_submission(canvas_zip, zip_output, original_name=False) -> None
     :param original_name: Whether to extract into folders with the original ZIP name.
     :return: None
     """
+    if zip_output is None:
+        zip_output = Path.cwd() / canvas_zip.with_suffix("").name
+
     # If path already exists, first check if we should write to it.
     if os.path.exists(zip_output):
         if not os.path.isdir(zip_output):
