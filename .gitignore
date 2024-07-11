@@ -9,6 +9,6 @@ report/
 report.html
 online_solutions/
 moss_reports/
-submissions/
+submissions*/
 __pycache__/
 .idea/
