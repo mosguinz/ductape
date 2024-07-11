@@ -56,9 +56,9 @@ def unzip_canvas_submission(
         for submission in zf.infolist():
             # Canvas ZIP name format (may contain -i at the end for resubmissions, where i is the attempt number):
             # <last><first>_<canvas_id>_<sis_id>_<original_filename>[-i]
-            res = re.match(r"([^\W_]+)(?:_\w+)*_(\d+)_(\d+)_(.+)", submission.filename)
+            res = re.match(r"([^\W_]+)(?:_\w+)*_(\d+)_(\d+)_(.+)\.", submission.filename)
             try:
-                folder_name = res[2] if original_name else res[1]
+                folder_name = res[4] if original_name else f"{res[1]}_{res[2]}"
             except TypeError:  # if match returns None
                 log.warning("Could not parse the Canvas ZIP file, did the format change?")
                 folder_name = submission.filename
