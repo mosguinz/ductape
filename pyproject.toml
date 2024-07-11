@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "mos-moss"
+name = "ductape"
 version = "0.1.0"
 description = ""
 authors = ["mosguinz <mos.guinz@gmail.com>"]
@@ -23,7 +23,7 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-mos-moss = "mos_moss.main:app"
+ductape = "ductape.main:app"
 zipcheck = "zipfile_check:main"
 
 #

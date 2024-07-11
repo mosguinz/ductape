@@ -5,8 +5,8 @@ from rich import print
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing_extensions import Annotated
 
-from mos_moss import config as Config
-from mos_moss import file_handler as FileHandler
+from ductape import config as Config
+from ductape import file_handler as FileHandler
 
 app = typer.Typer()
 Config.load_keys()
