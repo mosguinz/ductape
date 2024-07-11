@@ -6,6 +6,8 @@ import shutil
 import zipfile
 from pathlib import Path
 
+from rich.progress import track
+
 log = logging.getLogger()
 
 
@@ -51,7 +53,7 @@ def unzip_canvas_submission(
             raise FileExistsError(f"{destination} is not empty.")
 
     with zipfile.ZipFile(canvas_zip, "r") as zf:
-        for submission in zf.infolist():
+        for submission in track(zf.infolist(), description=f"Unzipping {canvas_zip.name}"):
             # Canvas ZIP name format (may contain -i at the end for resubmissions, where i is the attempt number):
             # <last><first>_<canvas_id>_<sis_id>_<original_filename>[-i]
             res = re.match(r"([^\W_]+)(?:_\w+)*_(\d+)_(\d+)_(.+)\.", submission.filename)

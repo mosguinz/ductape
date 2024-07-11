@@ -2,7 +2,6 @@ from pathlib import Path
 
 import typer
 from rich import print
-from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing_extensions import Annotated
 
 from ductape import config as Config
@@ -124,13 +123,5 @@ def unzip(
     ] = False,
 ):
     """Unzip Canvas submission files."""
-    final_dest = None
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        transient=True,
-    ) as progress:
-        progress.add_task(description="Unzipping...")
-        final_dest = FileHandler.unzip_canvas_submission(zip_file, destination, original_name)
-
+    final_dest = FileHandler.unzip_canvas_submission(zip_file, destination, original_name)
     print(f"Items extracted to {final_dest}")
