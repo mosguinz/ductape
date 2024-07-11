@@ -2,9 +2,11 @@ from pathlib import Path
 
 import typer
 from rich import print
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing_extensions import Annotated
 
 from mos_moss import config as Config
+from mos_moss import file_handler as FileHandler
 
 app = typer.Typer()
 Config.load_keys()
@@ -108,9 +110,27 @@ def unzip(
             resolve_path=True,
         ),
     ],
+    destination: Annotated[
+        Path,
+        typer.Argument(
+            help="Location to place the extracted ZIP files.",
+            file_okay=False,
+            dir_okay=True,
+            resolve_path=True,
+        ),
+    ] = None,
     original_name: Annotated[
         bool, typer.Option(help="Whether to keep the submission's original name.")
     ] = False,
 ):
     """Unzip Canvas submission files."""
-    typer.echo("Unzip Canvas submission files.")
+    final_dest = None
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        transient=True,
+    ) as progress:
+        progress.add_task(description="Unzipping...")
+        final_dest = FileHandler.unzip_canvas_submission(zip_file, destination, original_name)
+
+    print(f"Items extracted to {final_dest}")
