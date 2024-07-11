@@ -6,11 +6,6 @@ import shutil
 import zipfile
 from pathlib import Path
 
-LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
-    "java": ["java"],
-    "cpp": [".cpp", ".h", ".hpp"],
-}
-
 log = logging.getLogger()
 
 
@@ -74,25 +69,3 @@ def unzip_canvas_submission(canvas_zip: Path, zip_output: Path, original_name=Fa
                 student_zip.extractall(path=path)
                 cleanup_files(path)
                 flatten_folder(path)
-
-
-def list_files(folder: str, language="") -> list[str]:
-    """
-    List files from the provided folder. If `language` is provided, the
-    resulting list will only contain files that match the extension of the
-    language.
-    """
-    files = []
-    for ext in LANGUAGE_EXTENSIONS.get(language.lower(), ""):
-        files += glob.glob(f"{folder}/**/*{ext}", recursive=True)
-
-    new_files = []
-    for f in files:
-        if (
-            os.path.isfile(f)
-            and not f.endswith("pdf")
-            and not f.endswith("jar")
-            and os.path.getsize(f) > 0
-        ):
-            new_files.append(f)
-    return new_files

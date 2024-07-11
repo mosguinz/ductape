@@ -11,12 +11,39 @@ from pathlib import Path
 
 import mosspy
 
-from mos_moss.file_handler import list_files, unzip_canvas_submission
+from mos_moss.file_handler import unzip_canvas_submission
 
 # Set your MOSS ID here or in your environment variable.
 MOSS_ID = "1234"
 
+LANGUAGE_EXTENSIONS: dict[str, list[str]] = {
+    "java": ["java"],
+    "cpp": [".cpp", ".h", ".hpp"],
+}
+
 log = logging.getLogger()
+
+
+def list_files(folder: str, language="") -> list[str]:
+    """
+    List files from the provided folder. If `language` is provided, the
+    resulting list will only contain files that match the extension of the
+    language.
+    """
+    files = []
+    for ext in LANGUAGE_EXTENSIONS.get(language.lower(), ""):
+        files += glob.glob(f"{folder}/**/*{ext}", recursive=True)
+
+    new_files = []
+    for f in files:
+        if (
+            os.path.isfile(f)
+            and not f.endswith("pdf")
+            and not f.endswith("jar")
+            and os.path.getsize(f) > 0
+        ):
+            new_files.append(f)
+    return new_files
 
 
 def create_moss_comments(**kwargs) -> str:
