@@ -5,42 +5,18 @@ import re
 import shutil
 import tempfile
 import zipfile
-from dataclasses import dataclass
 from pprint import pprint
 
 import dotenv
 import requests
 import seedir
 
+from models import Submission, Compliance
+
 dotenv.load_dotenv()
 
 # For messaging feature, set Canvas token here or in your environment variable.
 CANVAS_TOKEN = "1234"
-
-
-@dataclass
-class Compliance:
-    zip_name_compliant: bool = None
-    report_name_compliant: bool = None
-    folders_compliant: bool = None
-
-    zip_name: str = None
-    report_name: str = None
-    folder_structure: str = None
-
-    def __bool__(self):
-        return all((self.folders_compliant, self.report_name_compliant, self.zip_name_compliant))
-
-
-@dataclass
-class Submission:
-    student_name: str
-    canvas_id: int
-    sis_id: int
-    compliance: Compliance
-
-    def __hash__(self):
-        return hash(self.sis_id)
 
 
 def cleanup_files(path):
@@ -106,7 +82,11 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
                     dir_tree = seedir.fakedir(temp_dir)
                     dir_tree.name = original_filename
                     compliance.folder_structure = dir_tree.seedir(
-                        printout=False, exclude_folders=".git", itemlimit=5, depthlimit=3, beyond="content"
+                        printout=False,
+                        exclude_folders=".git",
+                        itemlimit=5,
+                        depthlimit=3,
+                        beyond="content",
                     )
 
                     if parts:
@@ -115,7 +95,10 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
                         compliance.report_name_compliant = check_report(temp_dir)
 
             submission = Submission(
-                student_name=res[1], canvas_id=int(res[2]), sis_id=int(res[3]), compliance=compliance
+                student_name=res[1],
+                canvas_id=int(res[2]),
+                sis_id=int(res[3]),
+                compliance=compliance,
             )
             submissions.append(submission)
 
@@ -123,7 +106,9 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
     # pprint({k: v for k, v in compliance.items() if not v.report})
 
 
-def send_message(assignment_name: str, parts: list[str], submission: Submission, canvas_token=None, debug=False):
+def send_message(
+    assignment_name: str, parts: list[str], submission: Submission, canvas_token=None, debug=False
+):
     canvas_token = canvas_token or os.getenv("CANVAS_TOKEN") or CANVAS_TOKEN
 
     if not canvas_token:
@@ -164,7 +149,9 @@ def send_message(assignment_name: str, parts: list[str], submission: Submission,
         "\nBe sure to update your submission before the deadline to avoid penalties. Failure to do so may "
         "result in a zero for some or all parts of the assignment."
     )
-    messages.append("This is an automated check. If you believe this message was sent in error, please let us know.")
+    messages.append(
+        "This is an automated check. If you believe this message was sent in error, please let us know."
+    )
     body = "\n".join(messages)
 
     data = {
@@ -227,7 +214,8 @@ def display_submissions(submissions: list[Submission], verbose: bool) -> None:
 
     # Print headers
     header_str = " | ".join(
-        f"{headers[i]:<{col_widths[i]}}" if i < 3 else f"{headers[i]:^{col_widths[i]}}" for i in range(len(headers))
+        f"{headers[i]:<{col_widths[i]}}" if i < 3 else f"{headers[i]:^{col_widths[i]}}"
+        for i in range(len(headers))
     )
     line = "-" * len(header_str)
     print(header_str)
@@ -239,7 +227,8 @@ def display_submissions(submissions: list[Submission], verbose: bool) -> None:
             print(header_str)
 
         row_str = " | ".join(
-            f"{row[i]:<{col_widths[i]}}" if i < 3 else f"{row[i]:^{col_widths[i]}}" for i in range(len(row))
+            f"{row[i]:<{col_widths[i]}}" if i < 3 else f"{row[i]:^{col_widths[i]}}"
+            for i in range(len(row))
         )
         print(row_str)
 
@@ -250,11 +239,15 @@ def display_submissions(submissions: list[Submission], verbose: bool) -> None:
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Utility for checking student's submission format.")
+    parser = argparse.ArgumentParser(
+        description="Utility for checking student's submission format."
+    )
 
     parser.add_argument("zip_file", help="The submission ZIP file from Canvas.")
     parser.add_argument("-a", "--asmt", help="The assignment name.", required=True)
-    parser.add_argument("-r", "--report", help="Whether a report is required.", action="store_true", default=True)
+    parser.add_argument(
+        "-r", "--report", help="Whether a report is required.", action="store_true", default=True
+    )
     parser.add_argument("-p", "--parts", help="Required folders to be present.", nargs="+")
     parser.add_argument(
         "-m",
