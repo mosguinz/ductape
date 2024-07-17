@@ -30,6 +30,29 @@ def flatten_folder(destination):
             os.rmdir(folder)
 
 
+def get_unique_path(path: Path) -> Path:
+    """
+    Get a path with a unique stem. If the provided path already exists,
+    the returned path will end with an underscore, followed by a number.
+
+    :param path: The desired path.
+    :return: The path with an appropriate numbered suffix, if necessary.
+    """
+    i = 1
+    original_stem = path.stem
+    original_suffix = path.suffix
+
+    while path.exists():
+        try:
+            stem, num = original_stem.rsplit("_", 1)
+            i = int(num) + 1
+            path = path.with_stem(f"{stem}_{i}").with_suffix(original_suffix)
+        except (ValueError, IndexError):
+            path = path.with_stem(f"{original_stem}_{i}").with_suffix(original_suffix)
+            i += 1
+    return path
+
+
 def unzip_canvas_submission(
     canvas_zip: Path, destination: Path = None, original_name=False
 ) -> Path:
@@ -45,12 +68,9 @@ def unzip_canvas_submission(
     if destination is None:
         destination = Path.cwd() / canvas_zip.with_suffix("").name
 
-    # If path already exists, first check if we should write to it.
-    if os.path.exists(destination):
-        if not os.path.isdir(destination):
-            raise TypeError(f"{destination} is not a directory.")
-        if os.listdir(destination):
-            raise FileExistsError(f"{destination} is not empty.")
+    if os.path.exists(destination) and not os.path.isdir(destination):
+        raise TypeError(f"{destination} is not a directory.")
+    destination = get_unique_path(destination)
 
     with zipfile.ZipFile(canvas_zip, "r") as zf:
         for submission in track(
