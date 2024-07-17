@@ -123,5 +123,5 @@ def unzip(
     ] = False,
 ):
     """Unzip Canvas submission files."""
-    final_dest = FileHandler.unzip_canvas_submission(zip_file, destination, original_name)
+    final_dest = FileHandler.unzip_canvas_zip(zip_file, destination, original_name)
     print(f"Items extracted to {final_dest}")

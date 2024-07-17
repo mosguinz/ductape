@@ -58,7 +58,7 @@ def check_zipfile(canvas_zip, parts: list[str] = None, report=True, debug=True):
     submissions = []
 
     with zipfile.ZipFile(canvas_zip, "r") as zf:
-        files = sorted(zf.infolist(), key=lambda x: x.filename)
+        files = sorted(zf.infolist(), key=lambda x: x.canvas_filename)
         for submission in files:
             print(submission.filename)
             res = re.match(r"([^\W_]+)(?:_\w+)*_(\d+)_(\d+)_(.+)", submission.filename)

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import mosspy
 
-from ductape.file_handler import unzip_canvas_submission
+from ductape.file_handler import unzip_canvas_zip
 
 # Set your MOSS ID here or in your environment variable.
 MOSS_ID = "1234"
@@ -251,7 +251,7 @@ def main():
     log.setLevel(logging.DEBUG if opt.verbose else logging.INFO)
     log.debug(f"CLI options: {pprint.pformat(opt.__dict__)}")
 
-    unzip_canvas_submission(
+    unzip_canvas_zip(
         canvas_zip=opt.zip_file,
         destination=opt.zip_output,
         original_name=opt.original_name,
