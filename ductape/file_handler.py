@@ -1,12 +1,14 @@
 import glob
 import logging
 import os
-import re
 import shutil
 import zipfile
 from pathlib import Path
 
+import rich
 from rich.progress import track
+
+from ductape.models import CanvasSubmission
 
 log = logging.getLogger()
 
@@ -53,9 +55,7 @@ def get_unique_path(path: Path) -> Path:
     return path
 
 
-def unzip_canvas_submission(
-    canvas_zip: Path, destination: Path = None, original_name=False
-) -> Path:
+def unzip_canvas_zip(canvas_zip: Path, destination: Path = None, original_name=False) -> Path:
     """
     Unzip the Canvas submission folder and place them in a folder.
     Set `original_name` to `True` to keep student's ZIP file original name.
@@ -73,21 +73,22 @@ def unzip_canvas_submission(
     destination = get_unique_path(destination)
 
     with zipfile.ZipFile(canvas_zip, "r") as zf:
-        for submission in track(
+        for zip_item in track(
             zf.infolist(), description=f"Extracting [bright_magenta]{canvas_zip.name}[/]"
         ):
-            # Canvas ZIP name format (may contain -i at the end for resubmissions, where i is the attempt number):
-            # <last><first>_<canvas_id>_<sis_id>_<original_filename>[-i]
-            res = re.match(r"([^\W_]+)(?:_\w+)*_(\d+)_(\d+)_(.+)\.", submission.filename)
-            try:
-                folder_name = res[4] if original_name else f"{res[1]}_{res[2]}"
-            except TypeError:  # if match returns None
-                log.warning("Could not parse the Canvas ZIP file, did the format change?")
-                folder_name = submission.filename
+
+            rich.print(f"Extracting [magenta]{zip_item.filename}[/]")
+            submission = CanvasSubmission(zip_item.filename)
+            folder_name = (
+                submission.original_filename
+                if original_name
+                else Path(submission.canvas_filename).stem
+            )
 
             log.debug(f"Extracting {folder_name}")
 
-            b = zf.open(submission, "r")
+            # TODO: move this outside, so we can handle non-ZIP submissions, separately
+            b = zf.open(zip_item, "r")
             with zipfile.ZipFile(b) as student_zip:
                 path = os.path.join(destination, folder_name)
 
