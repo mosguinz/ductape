@@ -79,21 +79,21 @@ def unzip_canvas_zip(canvas_zip: Path, destination: Path = None, original_name=F
 
             rich.print(f"Extracting [magenta]{zip_item.filename}[/]")
             submission = CanvasSubmission(zip_item.filename)
-            folder_name = (
-                submission.original_filename
-                if original_name
-                else Path(submission.canvas_filename).stem
-            )
+            stem = submission.original_filename if original_name else submission.canvas_filename
 
-            log.debug(f"Extracting {folder_name}")
+            log.debug(f"Extracting {stem}")
 
-            # TODO: move this outside, so we can handle non-ZIP submissions, separately
-            b = zf.open(zip_item, "r")
-            with zipfile.ZipFile(b) as student_zip:
-                path = os.path.join(destination, folder_name)
-
-                student_zip.extractall(path=path)
-                cleanup_files(path)
-                flatten_folder(path)
+            with zf.open(zip_item, "r") as f:
+                try:
+                    # If it's a ZIP file, extract it in a folder with that name.
+                    path = destination / stem.with_suffix("")
+                    with zipfile.ZipFile(f) as student_zip:
+                        student_zip.extractall(path)
+                    cleanup_files(path)
+                    flatten_folder(path)
+                except zipfile.BadZipfile:
+                    # If not, just place it in the folder.
+                    zip_item.filename = stem.name
+                    zf.extract(zip_item, destination)
 
     return destination
