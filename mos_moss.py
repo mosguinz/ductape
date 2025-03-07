@@ -327,3 +327,6 @@ def main():
             no_report=opt.no_report,
             count=n,
         )
+
+if __name__ == "__main__":
+    main()
